@@ -1,5 +1,12 @@
 import re
 
+def getFirstNonNumericChar(str):
+    for char in str:
+        if char not in ['-', '.', ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            return char
+
+    return ""
+
 # Given catalogPage (soup of website like: https://www.tiroche.co.il/paintings-authors/marc-chagall/)
 # returns all the links to the items
 def getCatalogsItemLinks(catalogPage):
@@ -40,13 +47,29 @@ def getItemText(itemPage):
 
 # Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
 # returns the estimated price
-# TODO
+def getItemEstimatedPrice(itemPage):
+    textElem =  itemPage.find(class_="single-lot__estimate")
+    if textElem is None:
+        return ""
+    textElem =  textElem.find('strong')
+    if textElem is None:
+        return ""
+    text = textElem.get_text()
+    textArr = text.split('-')
+    estimateData = {
+        "low-estimate": "",
+        "high-estimate": "",
+        "currency": ""
+    }
 
-
-
-
-
-
+    estimateData["currency"] = getFirstNonNumericChar(text)
+    if (len(textArr) == 2):
+        estimateData["low-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
+        estimateData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[1])
+    elif (len(textArr) == 1):
+        estimateData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
+    
+    return estimateData
 
 
 

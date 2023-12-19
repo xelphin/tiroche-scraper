@@ -9,7 +9,7 @@ import pandas as pd
 
 from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
-from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues
+from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 
 # GLOBALS
@@ -44,6 +44,7 @@ def getItemData(itemLink):
     itemInfo = getItemText(soup)
     itemData['info'] = itemInfo
     itemData.update(extractFromItemTextTheValues(itemInfo))
+    itemData.update(getItemEstimatedPrice(soup))
 
     return itemData
 
