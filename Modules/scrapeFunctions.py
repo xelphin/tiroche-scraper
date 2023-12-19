@@ -72,8 +72,6 @@ def getItemEstimatedPrice(itemPage):
     return estimateData
 
 
-
-
 # Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
 # extracts from the paragraph (text) found the values: innacurate extraction!
 # EXTRACT FROM ITEM TEXT THE VALUES

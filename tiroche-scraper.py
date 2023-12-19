@@ -50,17 +50,17 @@ def getItemData(itemLink):
 
 def getAllItemData(allLinks):
     allItemData = []
-    clearFile('item_data.txt')
-    print("See ./item_data.txt to see the data being gathered")
+    clearFile('./Outputs/item_data.txt')
+    print("See ./Outputs/item_data.txt to see the data being gathered")
     for link in allLinks:
         itemData = getItemData(link)
         allItemData.extend(itemData)
-        appendTextToFile(str(itemData), 'item_data.txt')
+        appendTextToFile(str(itemData), './Outputs/item_data.txt')
     return allItemData
 
 
 allItemLinks = getAllItemLinks(artistName)
-printTextToFile(str(allItemLinks), "item_links.txt")
+printTextToFile(str(allItemLinks), "./Outputs/item_links.txt")
 allItemData = getAllItemData(allItemLinks)
 
 # REFERENCE
