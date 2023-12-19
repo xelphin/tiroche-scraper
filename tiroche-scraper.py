@@ -9,12 +9,12 @@ import pandas as pd
 
 from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
-from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText
+from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 
 # GLOBALS
 artworks = []
-userInput = "Marc Chagall"
+userInput = "Izhak Frenkel Frenel"
 artistName = strToQueryStr(userInput)
 
 # PRIMARY FUNCTIONS
@@ -39,9 +39,11 @@ def getItemData(itemLink):
         return ""
     soup = getSoup(response)
 
+    itemData['websiteLink'] = itemLink
     itemData['imgLink'] = getItemImgLink(soup)
     itemInfo = getItemText(soup)
     itemData['info'] = itemInfo
+    itemData.update(extractFromItemTextTheValues(itemInfo))
 
     return itemData
 
