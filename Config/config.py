@@ -41,14 +41,15 @@ def getConfig():
     with open(configPath, 'r') as file:
         return json.load(file)
 
-def downloadImages(allItemData, downloadPath):
-    removeJpgImages(downloadPath) # clear what was in the images folder before
+def downloadImages(allItemData, downloadPath, deleteOldImages):
+    if (deleteOldImages):
+        removeJpgImages(downloadPath) # clear what was in the images folder before
     count = 0
     for item in allItemData:
-        downloadImage(item["imgLink"], downloadPath, str(count)+".jpg")
+        downloadImage(item["imgLink"], downloadPath, item['id']+".jpg")
         count+=1
 
-def applyConfig(allItemData):
+def applyConfigFromAllItems(allItemData):
     config = getConfig()
     if (config["downloadImages"]):
-        downloadImages(allItemData, config["pathToImagesPrinted"])
+        downloadImages(allItemData, config["pathToImagesPrinted"], config["deleteOldImages"])

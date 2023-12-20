@@ -10,12 +10,12 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 # Modules
-from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup
+from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup, getUID4
 from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
-from Config.config import applyConfig
+from Config.config import applyConfigFromAllItems
 
 # Globals
 
@@ -49,6 +49,7 @@ def getItemData(itemLink):
         return ""
     soup = getSoup(response)
 
+    itemData['id'] = getUID4()
     itemData['websiteLink'] = itemLink
     itemData['imgLink'] = getItemImgLink(soup)
     itemInfo = getItemText(soup)
@@ -97,6 +98,6 @@ if __name__ == "__main__":
         print(f"You can find the csv file in: {dataCsvPathName}")
 
         # Config
-        applyConfig(allItemData)
+        applyConfigFromAllItems(allItemData)
 
 
