@@ -15,7 +15,7 @@ from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
-from Config.config import applyConfigFromAllItems, filterLinkKeep
+from config import applyConfigFromAllItems, filterLinkKeep, filterOutBecauseImageInIgnore
 
 # Globals
 
@@ -63,11 +63,18 @@ def getItemData(itemLink):
 def getAllItemData(allLinks):
     allItemData = []
     clearFile(allItemsPathName)
+
     # Get data for each item
+    #count = 0 # TODO: DELETE!!!!!!!!
     for link in allLinks:
-        itemData = getItemData(link)
-        allItemData.append(itemData)
-        appendTextToFile(str(itemData), allItemsPathName)
+        #if (count < 12): # TODO: DELETE!!!!!!!!
+            #print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
+            itemData = getItemData(link)
+            if (not filterOutBecauseImageInIgnore(itemData["imgLink"])):
+                allItemData.append(itemData)
+                appendTextToFile(str(itemData), allItemsPathName)
+            #count += 1 # TODO: DELETE!!!!!!!!
+
     # Reputting it so it's in a nice format
     clearFile(allItemsPathName)
     printTextToFile(str(allItemData), allItemsPathName)

@@ -27,7 +27,11 @@ def getCatalogsItemLinks(catalogPage):
 # returns img link
 def getItemImgLink(itemPage):
     imageDiv =  itemPage.find(id="wrpLotImages")
+    if imageDiv is None:
+        return ""
     imageElem =  imageDiv.find('a')
+    if imageElem is None:
+        return ""
     imageLink = imageElem.attrs['href']
     if imageLink is not None:
         return imageLink
