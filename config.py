@@ -1,11 +1,25 @@
 import json
 import os
 import requests
+from Modules.scrapeFunctions import getItemImgLink
+from Modules.fetch import getPageOfUrl, getSoup
+from Modules.debugging import appendTextToFile, clearFile
 
 # NOTE: Called from ../tiroche-scraper.py , so that's why the paths are written as they are
 
+# GLOBALS
+
 configPath = "./Config/config.json"
 ignoreLinksPath = "./Config/ignoreLinks.txt"
+ignoreLinksImagesExtractedPath = "./Config/ignoreLinksImages.txt"
+ignoreLinks = []
+ignoreImgLinks = []
+def getConfig():
+    with open(configPath, 'r') as file:
+        return json.load(file)
+config = getConfig()
+
+# HELPER FUNCTIONS
 
 def removeJpgImages(folderPath):
     # (Asked chatGPT lol)
@@ -38,9 +52,7 @@ def downloadImage(url, folderPath, fileName):
     else:
         print(f"Failed to download image. Status code: {response.status_code}")
 
-def getConfig():
-    with open(configPath, 'r') as file:
-        return json.load(file)
+
 
 def downloadImages(allItemData, downloadPath, deleteOldImages):
     if (deleteOldImages):
@@ -62,12 +74,32 @@ def readLinesFromFile(filePath):
     
     return lines
 
+def getImageLinksFromItemLinks(allLinks, arrToAddTo):
+    arrToAddTo = []
+    clearFile(ignoreLinksImagesExtractedPath)
+    for link in allLinks:
+        response = getPageOfUrl(link)
+        if (response.status_code == 200):
+            soup = getSoup(response)
+            imgLink = getItemImgLink(soup)
+            if (imgLink != ""):
+                arrToAddTo.append(imgLink)
+                appendTextToFile(str(imgLink), ignoreLinksImagesExtractedPath)
+    
+    return arrToAddTo
+
+
+
 # PRE MUST DO
 
-ignoreLinks = []
-config = getConfig()
+
 if (config["ignoreCertainLinks"]):
     ignoreLinks = readLinesFromFile(ignoreLinksPath)
+    if (config["sophisticatedIgnoreCertainLinks"]):
+        # sophisticated: even if not the exact link, enough that they have the same image (painting) so as to make it be ignored
+        ignoreImgLinks = getImageLinksFromItemLinks(ignoreLinks, ignoreImgLinks)
+        
+                
 
 
 # MAIN CONFIG FUNCTIONS
@@ -77,6 +109,12 @@ def filterLinkKeep(link):
         print("Need to ignore link: ", link)
         return False
     return True
+
+def filterOutBecauseImageInIgnore(link):
+    if (link in ignoreImgLinks):
+        print("Need to ignore img: ", link)
+        return True
+    return False
 
 def applyConfigFromAllItems(allItemData):
     if (config["downloadImages"]):

@@ -2,5 +2,6 @@
     "downloadImages": true,
     "pathToImagesPrinted": "./Outputs/images",
     "deleteOldImages": true,
-    "ignoreCertainLinks": true
+    "ignoreCertainLinks": true,
+    "sophisticatedIgnoreCertainLinks": true
 }
