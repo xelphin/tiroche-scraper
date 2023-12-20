@@ -15,6 +15,7 @@ from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
+from Config.config import applyConfig
 
 # Globals
 
@@ -94,5 +95,8 @@ if __name__ == "__main__":
         # Turn to CSV
         listOfDictToCsv(allItemData, dataCsvPathName)
         print(f"You can find the csv file in: {dataCsvPathName}")
+
+        # Config
+        applyConfig(allItemData)
 
 
