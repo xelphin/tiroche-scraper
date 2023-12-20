@@ -1,5 +1,6 @@
 {
     "downloadImages": true,
     "pathToImagesPrinted": "./Outputs/images",
-    "deleteOldImages": false
+    "deleteOldImages": true,
+    "ignoreCertainLinks": true
 }

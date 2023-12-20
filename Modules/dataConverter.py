@@ -8,6 +8,8 @@ import pandas as pd
 # ]
 
 def getDictKeys(listDict):
+    if (len(listDict) == 0):
+        return []
     if listDict[0]:
         return list(listDict[0].keys())
     return []

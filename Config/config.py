@@ -5,6 +5,7 @@ import requests
 # NOTE: Called from ../tiroche-scraper.py , so that's why the paths are written as they are
 
 configPath = "./Config/config.json"
+ignoreLinksPath = "./Config/ignoreLinks.txt"
 
 def removeJpgImages(folderPath):
     # (Asked chatGPT lol)
@@ -49,7 +50,34 @@ def downloadImages(allItemData, downloadPath, deleteOldImages):
         downloadImage(item["imgLink"], downloadPath, item['id']+".jpg")
         count+=1
 
+def readLinesFromFile(filePath):
+    lines = []
+    try:
+        with open(filePath, 'r') as file:
+            lines = [line.strip() for line in file.readlines()]
+    except FileNotFoundError:
+        print(f"File not found: {filePath}")
+    except Exception as e:
+        print(f"Error reading file: {e}")
+    
+    return lines
+
+# PRE MUST DO
+
+ignoreLinks = []
+config = getConfig()
+if (config["ignoreCertainLinks"]):
+    ignoreLinks = readLinesFromFile(ignoreLinksPath)
+
+
+# MAIN CONFIG FUNCTIONS
+        
+def filterLinkKeep(link):
+    if (link in ignoreLinks):
+        print("Need to ignore link: ", link)
+        return False
+    return True
+
 def applyConfigFromAllItems(allItemData):
-    config = getConfig()
     if (config["downloadImages"]):
         downloadImages(allItemData, config["pathToImagesPrinted"], config["deleteOldImages"])

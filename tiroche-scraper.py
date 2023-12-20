@@ -15,7 +15,7 @@ from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
-from Config.config import applyConfigFromAllItems
+from Config.config import applyConfigFromAllItems, filterLinkKeep
 
 # Globals
 
@@ -36,7 +36,8 @@ def getAllItemLinks(artistName) :
             return itemLinks
         soup = getSoup(response)
         pageItemLinks = getCatalogsItemLinks(soup)
-        itemLinks.extend(pageItemLinks)
+        pageItemLinksFiltered = [item for item in pageItemLinks if filterLinkKeep(item)]
+        itemLinks.extend(pageItemLinksFiltered)
         count += 1
     
     # (won't get here)
@@ -49,8 +50,8 @@ def getItemData(itemLink):
         return ""
     soup = getSoup(response)
 
-    itemData['id'] = getUID4()
     itemData['websiteLink'] = itemLink
+    itemData['id'] = getUID4()
     itemData['imgLink'] = getItemImgLink(soup)
     itemInfo = getItemText(soup)
     itemData['info'] = itemInfo
