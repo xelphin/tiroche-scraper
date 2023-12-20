@@ -125,7 +125,15 @@ def extractFromItemTextTheValues(text):
     if (len(pointSepArr) == 0):
         return ""
     commaSepArr = pointSepArr[0].split(',')
-    textValues = {}
+    textValues = {
+        "guessed-year": "",
+        "guessed-signed": "",
+        "guessed-title": "",
+        "guessed-paintingType": "",
+        "guessed-height": "",
+        "guessed-width": "",
+        "guessed-units": "",
+    }
 
     textValues["guessed-year"] = extractFromItemTextTheValues_year(text)
     if (len(pointSepArr) > 1):

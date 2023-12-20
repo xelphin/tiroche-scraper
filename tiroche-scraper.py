@@ -13,12 +13,14 @@ import pandas as pd
 from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
-from debugging import printTextToFile, appendTextToFile, clearFile
+from Modules.debugging import printTextToFile, appendTextToFile, clearFile
+from Modules.dataConverter import listOfDictToCsv
 
 # Globals
 
 allLinksPathName = './Outputs/item_links.txt'
 allItemsPathName = './Outputs/item_data.txt'
+dataCsvPathName = './Outputs/data.csv'
 
 # PRIMARY FUNCTIONS
 def getAllItemLinks(artistName) :
@@ -58,10 +60,15 @@ def getItemData(itemLink):
 def getAllItemData(allLinks):
     allItemData = []
     clearFile(allItemsPathName)
+    # Get data for each item
     for link in allLinks:
         itemData = getItemData(link)
-        allItemData.extend(itemData)
+        allItemData.append(itemData)
         appendTextToFile(str(itemData), allItemsPathName)
+    # Reputting it so it's in a nice format
+    clearFile(allItemsPathName)
+    printTextToFile(str(allItemData), allItemsPathName)
+    # Return
     return allItemData
 
 
@@ -84,26 +91,8 @@ if __name__ == "__main__":
         allItemData = getAllItemData(allItemLinks)
         print("Finished gathering all data of paintings")
 
-
-# REFERENCE
-# for i in range(1,5):
-#   url = f"https://books.toscrape.com/catalogue/page-{i}.html" # the 'f' at the starts makes the 'i' a variable
-#   response = requests.get(url)
-#   response = response.content
-#   soup = BeautifulSoup(response, 'html.parser')
-#   ol = soup.find('ol')
-#   articles = ol.find_all('article', class_='product_pod')
-#   for article in articles:
-#     image = article.find('img')
-#     title = image.attrs['alt']
-#     starTag = article.find('p')
-#     star = starTag['class'][1]
-#     price = article.find('p', class_='price_color').text
-#     price = float(price[1:])
-#     books.append([title, star, price])
-    
-
-# df = pd.DataFrame(books, columns=['Title', 'Star Rating', 'Price'])
-# df.to_csv('books.csv')
+        # Turn to CSV
+        listOfDictToCsv(allItemData, dataCsvPathName)
+        print(f"You can find the csv file in: {dataCsvPathName}")
 
 
