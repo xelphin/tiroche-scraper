@@ -10,9 +10,9 @@ Installs requirements ('requests', 'beautifulsoup4', 'pandas')
 
 ## Run
 
-Example if you want to search for artist "Izhak Frenkel Frenel"
+Example if you want to search for artist "Arie Aroch"
 ```
-$ python3 tiroche-scraper.py Izhak Frenkel Frenel
+$ python3 tiroche-scraper.py Arie Aroch
 ```
 
 In `./Outputs/data.csv` you'll have the data as a csv file
