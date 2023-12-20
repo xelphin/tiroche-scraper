@@ -19,7 +19,7 @@ In `./Outputs/data.csv` you'll have the data as a csv file
 
 ## Config
 
-In `./Config/config.json` you can change whether or not you want to have images downloaded
+In `./Config/config.json` you can change whether or not you want to have images downloaded and whether or not you want to ignore certain links
 
 ### Notice
 Because "Tircohe" doesn't have a consistent frame for how it writes out: title, year, painting type, dimensions and signed status, 

@@ -50,8 +50,8 @@ def getItemData(itemLink):
         return ""
     soup = getSoup(response)
 
-    itemData['websiteLink'] = itemLink
     itemData['id'] = getUID4()
+    itemData['websiteLink'] = itemLink
     itemData['imgLink'] = getItemImgLink(soup)
     itemInfo = getItemText(soup)
     itemData['info'] = itemInfo
