@@ -12,7 +12,7 @@ import pandas as pd
 # Modules
 from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup, getUID4
 from Modules.helperFunctionsGeneral import strToQueryStr
-from Modules.scrapeFunctions import getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
+from Modules.scrapeFunctions import getArtistName, getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
 from config import applyConfigFromAllItems, filterLinkKeep, filterOutBecauseImageInIgnore
@@ -51,6 +51,7 @@ def getItemData(itemLink):
     soup = getSoup(response)
 
     itemData['id'] = getUID4()
+    itemData['artist'] = getArtistName(soup)
     itemData['websiteLink'] = itemLink
     itemData['imgLink'] = getItemImgLink(soup)
     itemInfo = getItemText(soup)
@@ -65,15 +66,15 @@ def getAllItemData(allLinks):
     clearFile(allItemsPathName)
 
     # Get data for each item
-    #count = 0 # TODO: DELETE!!!!!!!!
+    # count = 0 # TODO: DELETE!!!!!!!!
     for link in allLinks:
-        #if (count < 12): # TODO: DELETE!!!!!!!!
-            #print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
+        # if (count < 12): # TODO: DELETE!!!!!!!!
+            # print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
             itemData = getItemData(link)
             if (not filterOutBecauseImageInIgnore(itemData["imgLink"])):
                 allItemData.append(itemData)
                 appendTextToFile(str(itemData), allItemsPathName)
-            #count += 1 # TODO: DELETE!!!!!!!!
+            # count += 1 # TODO: DELETE!!!!!!!!
 
     # Reputting it so it's in a nice format
     clearFile(allItemsPathName)

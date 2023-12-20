@@ -24,6 +24,17 @@ def getCatalogsItemLinks(catalogPage):
     return itemsLinks
 
 # Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
+# returns artist name
+def getArtistName(itemPage):
+    titleDiv =  itemPage.find(class_="single-lot__h1")
+    if titleDiv is None:
+        return ""
+    titleElem =  titleDiv.find('h1')
+    if titleElem is None:
+        return ""
+    return titleElem.get_text()
+
+# Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
 # returns img link
 def getItemImgLink(itemPage):
     imageDiv =  itemPage.find(id="wrpLotImages")
