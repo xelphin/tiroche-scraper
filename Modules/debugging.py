@@ -7,5 +7,9 @@ def appendTextToFile(text, file_path):
         file.write(text + "\n")
 
 def clearFile(file_path):
-    with open(file_path, 'w') as file:
-        file.write("")
+    try:
+        with open(file_path, 'w') as file:
+            file.write("")
+            pass  # Open the file and do nothing
+    except FileNotFoundError:
+        pass  # File doesn't exist, so nothing to clear
