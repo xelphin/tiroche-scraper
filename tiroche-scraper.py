@@ -10,12 +10,12 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 # Modules
-from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup, getUID4
+from Modules.fetch import getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
-from Modules.config import applyConfigFromAllItems, filterLinkKeep, filterOutBecauseImageInIgnore
 
+from Modules.Config import Config
 from Modules.TirocheScraper import TirocheScraper
 
 # Globals
@@ -23,10 +23,13 @@ from Modules.TirocheScraper import TirocheScraper
 allLinksPathName = './Outputs/item_links.txt'
 allItemsPathName = './Outputs/item_data.txt'
 dataCsvPathName = './Outputs/data.csv'
+configPath = "./Config/config.json"
+ignoreLinksPath = "./Config/ignoreLinks.txt"
+ignoreLinksImagesExtractedPath = "./Config/ignoreLinksImages.txt"
 
 # PRIMARY FUNCTIONS
 
-def getAllItemLinks(scraper) :
+def getAllItemLinks(scraper, config) :
     clearFile(allLinksPathName)
     stop = False
     count = 1
@@ -38,14 +41,14 @@ def getAllItemLinks(scraper) :
             return itemLinks
         soup = getSoup(response)
         pageItemLinks = scraper.getCatalogsItemLinks(soup)
-        pageItemLinksFiltered = [item for item in pageItemLinks if filterLinkKeep(item)]
+        pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
         itemLinks.extend(pageItemLinksFiltered)
         count += 1
     
     # (won't get here)
     return itemLinks 
 
-def getAllItemData(scraper, allLinks):
+def getAllItemData(scraper, config, allLinks):
     allItemData = []
     clearFile(allItemsPathName)
 
@@ -55,7 +58,7 @@ def getAllItemData(scraper, allLinks):
         # if (count < 12): # TODO: DELETE!!!!!!!!
             # print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
             itemData = scraper.getItemData(link)
-            if (not filterOutBecauseImageInIgnore(itemData["imgLink"])):
+            if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
                 allItemData.append(itemData)
                 appendTextToFile(str(itemData), allItemsPathName)
             # count += 1 # TODO: DELETE!!!!!!!!
@@ -85,17 +88,24 @@ if __name__ == "__main__":
                                         allItemsPathName= allItemsPathName,
                                         dataCsvPathName= dataCsvPathName
                                         )
+        
+        # Create Config object
+        config = Config(
+                        configPath= configPath,
+                        ignoreLinksPath= ignoreLinksPath,
+                        ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath
+                        )
 
 
 
         # Gather all item links
         print("Gathering links of all the paintings")
-        allItemLinks = getAllItemLinks(tirocheScraper)
+        allItemLinks = getAllItemLinks(tirocheScraper, config)
         print("Finished gathering links for each painting page, see: ", allLinksPathName)
 
         # Gather data on each item
         print("Gathering data on each painting, see: ", allItemsPathName)
-        allItemData = getAllItemData(tirocheScraper, allItemLinks)
+        allItemData = getAllItemData(tirocheScraper, config, allItemLinks)
         print("Finished gathering all data of paintings")
 
         # Turn to CSV
@@ -103,6 +113,6 @@ if __name__ == "__main__":
         print(f"You can find the csv file in: {dataCsvPathName}")
 
         # Config
-        applyConfigFromAllItems(allItemData)
+        config.applyConfigFromAllItems(allItemData)
 
 
