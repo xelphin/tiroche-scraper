@@ -1,14 +1,14 @@
 import json
 import os
 import requests
-from Modules.scrapeFunctions import getItemImgLink
-from Modules.fetch import getPageOfUrl, getSoup
-from Modules.debugging import appendTextToFile, clearFile
-
-# NOTE: Called from ../tiroche-scraper.py , so that's why the paths are written as they are
+from .scrapeFunctions import getItemImgLink
+from .fetch import getPageOfUrl, getSoup
+from .debugging import appendTextToFile, clearFile
 
 # GLOBALS
 
+# NOTE: Called from ../tiroche-scraper.py , so that's why the paths are written as they are
+# TODO: kinda think this is bad code that only works because the only caller actually does have this in its relative paths
 configPath = "./Config/config.json"
 ignoreLinksPath = "./Config/ignoreLinks.txt"
 ignoreLinksImagesExtractedPath = "./Config/ignoreLinksImages.txt"

@@ -12,10 +12,11 @@ import pandas as pd
 # Modules
 from Modules.fetch import getCatalogAtPageResponse, getPageOfUrl, getSoup, getUID4
 from Modules.helperFunctionsGeneral import strToQueryStr
-from Modules.scrapeFunctions import getArtistName, getCatalogsItemLinks, getItemImgLink, getItemText, extractFromItemTextTheValues, getItemEstimatedPrice
 from Modules.debugging import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
-from config import applyConfigFromAllItems, filterLinkKeep, filterOutBecauseImageInIgnore
+from Modules.config import applyConfigFromAllItems, filterLinkKeep, filterOutBecauseImageInIgnore
+
+from Modules.TirocheScraper import TirocheScraper
 
 # Globals
 
@@ -24,44 +25,27 @@ allItemsPathName = './Outputs/item_data.txt'
 dataCsvPathName = './Outputs/data.csv'
 
 # PRIMARY FUNCTIONS
-def getAllItemLinks(artistName) :
+
+def getAllItemLinks(scraper) :
     clearFile(allLinksPathName)
     stop = False
     count = 1
     itemLinks = []
     while (stop == False):
-        response = getCatalogAtPageResponse(count, artistName)
+        response = scraper.getCatalogAtPageResponse(count)
         if (response.status_code != 200):
             printTextToFile(str(itemLinks), allLinksPathName)
             return itemLinks
         soup = getSoup(response)
-        pageItemLinks = getCatalogsItemLinks(soup)
+        pageItemLinks = scraper.getCatalogsItemLinks(soup)
         pageItemLinksFiltered = [item for item in pageItemLinks if filterLinkKeep(item)]
         itemLinks.extend(pageItemLinksFiltered)
         count += 1
     
     # (won't get here)
-    return itemLinks     
+    return itemLinks 
 
-def getItemData(itemLink):
-    itemData = {}
-    response = getPageOfUrl(itemLink)
-    if (response.status_code != 200):
-        return ""
-    soup = getSoup(response)
-
-    itemData['id'] = getUID4()
-    itemData['artist'] = getArtistName(soup)
-    itemData['websiteLink'] = itemLink
-    itemData['imgLink'] = getItemImgLink(soup)
-    itemInfo = getItemText(soup)
-    itemData['info'] = itemInfo
-    itemData.update(extractFromItemTextTheValues(itemInfo))
-    itemData.update(getItemEstimatedPrice(soup))
-
-    return itemData
-
-def getAllItemData(allLinks):
+def getAllItemData(scraper, allLinks):
     allItemData = []
     clearFile(allItemsPathName)
 
@@ -70,7 +54,7 @@ def getAllItemData(allLinks):
     for link in allLinks:
         # if (count < 12): # TODO: DELETE!!!!!!!!
             # print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
-            itemData = getItemData(link)
+            itemData = scraper.getItemData(link)
             if (not filterOutBecauseImageInIgnore(itemData["imgLink"])):
                 allItemData.append(itemData)
                 appendTextToFile(str(itemData), allItemsPathName)
@@ -92,14 +76,26 @@ if __name__ == "__main__":
         userInput = ' '.join(sys.argv[1:])
         artistName = strToQueryStr(userInput)
 
+
+
+        # Create Scraper object
+        tirocheScraper = TirocheScraper(
+                                        artistName=artistName,
+                                        allLinksPathName= allLinksPathName,
+                                        allItemsPathName= allItemsPathName,
+                                        dataCsvPathName= dataCsvPathName
+                                        )
+
+
+
         # Gather all item links
         print("Gathering links of all the paintings")
-        allItemLinks = getAllItemLinks(artistName)
+        allItemLinks = getAllItemLinks(tirocheScraper)
         print("Finished gathering links for each painting page, see: ", allLinksPathName)
 
         # Gather data on each item
         print("Gathering data on each painting, see: ", allItemsPathName)
-        allItemData = getAllItemData(allItemLinks)
+        allItemData = getAllItemData(tirocheScraper, allItemLinks)
         print("Finished gathering all data of paintings")
 
         # Turn to CSV
