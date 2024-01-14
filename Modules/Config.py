@@ -2,7 +2,7 @@ import json
 import os
 import requests
 from .fetch import getPageOfUrl, getSoup
-from .debugging import appendTextToFile, clearFile
+from .io import appendTextToFile, clearFile
 
 # USES SCRAPER
 

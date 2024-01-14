@@ -3,7 +3,7 @@ import sys
 # Modules
 from Modules.fetch import getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
-from Modules.debugging import printTextToFile, appendTextToFile, clearFile
+from Modules.io import printTextToFile, appendTextToFile, clearFile
 from Modules.dataConverter import listOfDictToCsv
 
 from Modules.Config import Config
