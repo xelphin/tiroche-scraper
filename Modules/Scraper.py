@@ -1,5 +1,7 @@
 from .fetch import getPageOfUrl, getSoup, getUID4
 
+# DON'T IMPORT CONFIG
+
 class Scraper:
 
     # INIT

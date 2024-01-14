@@ -1,17 +1,19 @@
 import json
 import os
 import requests
-from .scrapeFunctions import getItemImgLink
 from .fetch import getPageOfUrl, getSoup
 from .debugging import appendTextToFile, clearFile
+
+# USES SCRAPER
 
 class Config:
 
     # INIT
-    def __init__(self, configPath, ignoreLinksPath, ignoreLinksImagesExtractedPath):
+    def __init__(self, configPath, ignoreLinksPath, ignoreLinksImagesExtractedPath, scraper):
         self.configPath = configPath
         self.ignoreLinksPath = ignoreLinksPath
         self.ignoreLinksImagesExtractedPath = ignoreLinksImagesExtractedPath
+        self.scraper = scraper
         self.ignoreLinks = []
         self.ignoreImgLinks = []
         print("---- CONFIG ----")
@@ -47,7 +49,12 @@ class Config:
         else:
             print(f"Folder '{folderPath}' does not exist.")
 
+
     def __downloadImage(self, url, folderPath, fileName):
+        if (url == ""):
+            print("Couldn't find img for: ", fileName)
+            return
+
         # (Asked chatGPT lol)
         os.makedirs(folderPath, exist_ok=True) # Create folder if needed
         filePath = os.path.join(folderPath, fileName) # Combine the folder path and file name to get the full file path
@@ -63,7 +70,6 @@ class Config:
             print(f"Failed to download image. Status code: {response.status_code}")
 
 
-
     def __downloadImages(self, allItemData, downloadPath, deleteOldImages):
         if (deleteOldImages):
             self.__removeJpgImages(downloadPath) # clear what was in the images folder before
@@ -71,6 +77,7 @@ class Config:
         for item in allItemData:
             self.__downloadImage(item["imgLink"], downloadPath, item['id']+".jpg")
             count+=1
+
 
     def __readLinesFromFile(self, filePath):
         lines = []
@@ -95,7 +102,7 @@ class Config:
                 response = getPageOfUrl(link)
                 if (response.status_code == 200):
                     soup = getSoup(response)
-                    imgLink = getItemImgLink(soup) # TODO: call it from a static function in TirocheScraper.py/Scraper.py
+                    imgLink = self.scraper.getItemImgLink(soup)
                     if (imgLink != ""):
                         arrToAddTo.append(imgLink)
                         appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)

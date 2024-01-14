@@ -69,13 +69,6 @@ if __name__ == "__main__":
         # Get the artistName from the command line
         userInput = ' '.join(sys.argv[1:])
         artistName = strToQueryStr(userInput)
-        
-        # Create Config object
-        config = Config(
-                        configPath= configPath,
-                        ignoreLinksPath= ignoreLinksPath,
-                        ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath
-                        )
 
         print("---- SCRAPER ----")
 
@@ -86,6 +79,14 @@ if __name__ == "__main__":
                                         allItemsPathName= allItemsPathName,
                                         dataCsvPathName= dataCsvPathName
                                         )
+        
+        # Create Config object
+        config = Config(
+                        configPath= configPath,
+                        ignoreLinksPath= ignoreLinksPath,
+                        ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath,
+                        scraper = tirocheScraper
+                        )
         
         # Gather all item links
         print("Gathering links of all the paintings")
