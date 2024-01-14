@@ -15,8 +15,8 @@ allLinksPathName = './Outputs/item_links.txt'
 allItemsPathName = './Outputs/item_data.txt'
 dataCsvPathName = './Outputs/data.csv'
 configPath = "./Config/config.json"
-ignoreLinksPath = "./Config/ignoreLinks.txt"
-ignoreLinksImagesExtractedPath = "./Config/ignoreLinksImages.txt"
+ignoreLinksPath = "./Config/ignoreCertainPaintingPageLinks.txt"
+ignoreLinksImagesExtractedPath = "./Config/ignoreCertainImageLinks.txt"
 
 # PRIMARY FUNCTIONS
 
@@ -69,8 +69,15 @@ if __name__ == "__main__":
         # Get the artistName from the command line
         userInput = ' '.join(sys.argv[1:])
         artistName = strToQueryStr(userInput)
+        
+        # Create Config object
+        config = Config(
+                        configPath= configPath,
+                        ignoreLinksPath= ignoreLinksPath,
+                        ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath
+                        )
 
-
+        print("---- SCRAPER ----")
 
         # Create Scraper object
         tirocheScraper = TirocheScraper(
@@ -80,15 +87,6 @@ if __name__ == "__main__":
                                         dataCsvPathName= dataCsvPathName
                                         )
         
-        # Create Config object
-        config = Config(
-                        configPath= configPath,
-                        ignoreLinksPath= ignoreLinksPath,
-                        ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath
-                        )
-
-
-
         # Gather all item links
         print("Gathering links of all the paintings")
         allItemLinks = getAllItemLinks(tirocheScraper, config)

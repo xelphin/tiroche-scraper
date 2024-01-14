@@ -21,7 +21,14 @@ In `./Outputs/data.csv` you'll have the data as a csv file
 
 In `./Config/config.json` you can change whether or not you want to have images downloaded and whether or not you want to ignore certain links
 
-Add to `./Config/ignoreLinks.txt` the links you want to ignore
+### Ignoring certain links
+
+Add to `./Config/ignoreCertainPaintingPageLinks.txt` the painting page links you want to ignore
+
+The `./Config/ignoreCertainImageLinks.txt`gets updated with the painting's link from these pages
+
+If you already calculated (ran the program with the links you put in `./Config/ignoreCertainPaintingPageLinks.txt`) then
+you can write `true` in `ignoreCertainImageLinksAlreadyUpdated` in the `./Config/config.json` file.
 
 #### Ignore Links (sophisticated ignore)
 

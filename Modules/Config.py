@@ -14,15 +14,17 @@ class Config:
         self.ignoreLinksImagesExtractedPath = ignoreLinksImagesExtractedPath
         self.ignoreLinks = []
         self.ignoreImgLinks = []
+        print("---- CONFIG ----")
         print("[Loading config...]")
         # config.json
         with open(configPath, 'r') as file:
             self.config =  json.load(file)
         
-        if (self.config["ignoreCertainLinks"]):
-            print("[Loading links to ignore from config...]")
+        if (self.config["ignoreCertainPaintingPageLinks"]):
+            print("[-Loading links to ignore from config...]")
             self.ignoreLinks = self.__readLinesFromFile(ignoreLinksPath)
-            if (self.config["sophisticatedIgnoreCertainLinks"]):
+            if (self.config["ignoreCertainImageLinks"]):
+                print("[--Loading imgs from links...]")
                 # sophisticated: even if not the exact link, enough that they have the same image (painting) so as to make it be ignored
                 self.ignoreImgLinks = self.__getImageLinksFromItemLinks(self.ignoreLinks, self.ignoreImgLinks)
 
@@ -84,15 +86,20 @@ class Config:
 
     def __getImageLinksFromItemLinks(self, allLinks, arrToAddTo):
         arrToAddTo = []
-        clearFile(self.ignoreLinksImagesExtractedPath)
-        for link in allLinks:
-            response = getPageOfUrl(link)
-            if (response.status_code == 200):
-                soup = getSoup(response)
-                imgLink = getItemImgLink(soup)
-                if (imgLink != ""):
-                    arrToAddTo.append(imgLink)
-                    appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
+        if (self.config["ignoreCertainImageLinksAlreadyUpdated"]):
+            arrToAddTo = self.__readLinesFromFile(self.ignoreLinksImagesExtractedPath)
+            print("[Haven't recalculated the 'ignoreCertainImageLinks' because of the Config/config.json 'ignoreCertainImageLinksAlreadyUpdated' is 'true']")
+        else :
+            clearFile(self.ignoreLinksImagesExtractedPath)
+            for link in allLinks:
+                response = getPageOfUrl(link)
+                if (response.status_code == 200):
+                    soup = getSoup(response)
+                    imgLink = getItemImgLink(soup) # TODO: call it from a static function in TirocheScraper.py/Scraper.py
+                    if (imgLink != ""):
+                        arrToAddTo.append(imgLink)
+                        appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
+            print("[Next time, you can write 'true' in 'ignoreCertainImageLinksAlreadyUpdated' in Config/config.json because the img links have been calculated now]")
         
         return arrToAddTo
     
