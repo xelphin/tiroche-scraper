@@ -30,10 +30,6 @@ The `./Config/ignoreCertainImageLinks.txt`gets updated with the painting's link 
 If you already calculated (ran the program with the links you put in `./Config/ignoreCertainPaintingPageLinks.txt`) then
 you can write `true` in `ignoreCertainImageLinksAlreadyUpdated` in the `./Config/config.json` file.
 
-#### Ignore Links (sophisticated ignore)
-
-Occassionaly, the same webpage (painting webpage) has various links, so when you add a link to `ignoreLinks.txt`, the program extracts the image (painting) from the webpage link and adds it to `ignoreLinksImages.txt` so that we make sure to ignore alternate links with the same painting.
-
 ## Notice
 Because "Tircohe" doesn't have a consistent frame for how it writes out: title, year, painting type, dimensions and signed status, 
 the program only guesses these values. However, the full text given can be found in "info"
