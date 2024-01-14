@@ -24,15 +24,37 @@ class Scraper:
     def getItemText(self, itemPage):
         return ""
     
-    def extractFromItemTextTheValues(self, text):
-        return ""
+    def extractFromItemTextTheValues(self, text, itemData):
+        itemData = itemData
     
-    def getItemEstimatedPrice(self, itemPage):
-        return ""
+    def getItemEstimatedPrice(self, itemPage, itemData):
+        itemData = itemData
+    
+    def __itemCreator(self):
+        item = {
+            "id": "",
+            "artist": "",
+            "websiteLink": "",
+            "imgLink": "",
+            "height": "",
+            "width": "",
+            "units": "",
+            "low-estimate": "",
+            "high-estimate": "",
+            "currency": "",
+            "info": "",
+            "guessed-year": "",
+            "guessed-signed": "",
+            "guessed-title": "",
+            "guessed-paintingType": "",
+            "guessed-height": "",
+            "guessed-width": "",
+            "guessed-units": ""
+        }
+        return item
     
     def getItemData(self, itemLink):
-        # TODO: then have it be the one getting filled
-        itemData = {}
+        itemData = self.__itemCreator()
         response = getPageOfUrl(itemLink)
         if (response.status_code != 200):
             return ""
@@ -44,7 +66,7 @@ class Scraper:
         itemData['imgLink'] = self.getItemImgLink(soup)
         itemInfo = self.getItemText(soup)
         itemData['info'] = itemInfo
-        itemData.update(self.extractFromItemTextTheValues(itemInfo)) # fix this so its generic here
-        itemData.update(self.getItemEstimatedPrice(soup))
+        itemData = self.extractFromItemTextTheValues(itemInfo, itemData)
+        itemData = self.getItemEstimatedPrice(soup, itemData)
 
         return itemData

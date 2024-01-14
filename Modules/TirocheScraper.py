@@ -82,7 +82,7 @@ class TirocheScraper(Scraper):
 
     # Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
     # returns the estimated price
-    def getItemEstimatedPrice(self, itemPage):
+    def getItemEstimatedPrice(self, itemPage, itemData):
         textElem =  itemPage.find(class_="single-lot__estimate")
         if textElem is None:
             return ""
@@ -91,20 +91,15 @@ class TirocheScraper(Scraper):
             return ""
         text = textElem.get_text()
         textArr = text.split('-')
-        estimateData = {
-            "low-estimate": "",
-            "high-estimate": "",
-            "currency": ""
-        }
-
-        estimateData["currency"] = self.__getFirstNonNumericChar(text)
-        if (len(textArr) == 2):
-            estimateData["low-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
-            estimateData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[1])
-        elif (len(textArr) == 1):
-            estimateData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
         
-        return estimateData
+        itemData["currency"] = self.__getFirstNonNumericChar(text)
+        if (len(textArr) == 2):
+            itemData["low-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
+            itemData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[1])
+        elif (len(textArr) == 1):
+            itemData["high-estimate"] = re.sub(r'[^0-9.]', '', textArr[0])
+        
+        return itemData
 
 
     # Given itemPage (soup of website like: https://www.tiroche.co.il/auction/158-en/lot-289-marc-chagall-2/)
@@ -153,34 +148,25 @@ class TirocheScraper(Scraper):
             text = text[:-1]
         return text
 
-    def extractFromItemTextTheValues(self, text):
+    def extractFromItemTextTheValues(self, text, itemData):
         # Assumes text appears as "Title, type, 00×00 units . signed/unsigned" for it to work properly
         text = self.__cleanupText(text)
         pointSepArr = text.rsplit('.', 1) # Splits with the last '.' that appears
         if (len(pointSepArr) == 0):
             return ""
         commaSepArr = pointSepArr[0].split(',')
-        textValues = {
-            "guessed-year": "",
-            "guessed-signed": "",
-            "guessed-title": "",
-            "guessed-paintingType": "",
-            "guessed-height": "",
-            "guessed-width": "",
-            "guessed-units": "",
-        }
 
-        textValues["guessed-year"] = self.__extractFromItemTextTheValues_year(text)
+        itemData["guessed-year"] = self.__extractFromItemTextTheValues_year(text)
         if (len(pointSepArr) > 1):
-            textValues["guessed-signed"] = pointSepArr[1]
+            itemData["guessed-signed"] = pointSepArr[1]
         if (len(commaSepArr) > 0):
-            textValues["guessed-title"] = ''.join(commaSepArr[:-2])
+            itemData["guessed-title"] = ''.join(commaSepArr[:-2])
         if (len(commaSepArr) > 1):
-            textValues["guessed-paintingType"] = commaSepArr[-2]
+            itemData["guessed-paintingType"] = commaSepArr[-2]
         if (len(commaSepArr) > 2):
             dimensions = self.__extractFromItemTextTheValues_dimensiones(commaSepArr[-1])
-            textValues["guessed-height"] = dimensions["height"]
-            textValues["guessed-width"] = dimensions["width"]
-            textValues["guessed-units"] = dimensions["units"]
+            itemData["guessed-height"] = dimensions["height"]
+            itemData["guessed-width"] = dimensions["width"]
+            itemData["guessed-units"] = dimensions["units"]
 
-        return textValues
+        return itemData

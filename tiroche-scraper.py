@@ -1,14 +1,5 @@
 import sys
 
-# pip3 install requests
-import requests
-
-# pip3 install beautifulsoup4
-from bs4 import BeautifulSoup
-
-# pip3 install pandas
-import pandas as pd
-
 # Modules
 from Modules.fetch import getSoup
 from Modules.helperFunctionsGeneral import strToQueryStr
