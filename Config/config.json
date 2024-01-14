@@ -2,6 +2,7 @@
     "downloadImages": true,
     "pathToImagesPrinted": "./Outputs/images",
     "deleteOldImages": true,
-    "ignoreCertainLinks": true,
-    "sophisticatedIgnoreCertainLinks": true
+    "ignoreCertainPaintingPageLinks": true,
+    "ignoreCertainImageLinks": true,
+    "ignoreCertainImageLinksAlreadyUpdated": false
 }
