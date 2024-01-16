@@ -20,6 +20,14 @@ def getSoup(response):
         content = response.content
     return BeautifulSoup(content, 'html.parser')
 
+def getSoup_forAsync(response):
+    if response.status == 200:
+        content = response.content
+        return BeautifulSoup(content, 'html.parser')
+    else:
+        # TODO: Handle Exception
+        return None
+
 def getSoupFromContent(content):
     # if response.status_code == 200:
     #     content = response.content

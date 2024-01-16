@@ -31,37 +31,34 @@ async def getItemDataFromLink(session, link, lock, itemData_file, allPageItemDat
     itemData = await scraper.getItemData(link, session)
 
     if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
-        with lock:
+        async with lock:
             allPageItemData.append(itemData)
-        with lock:
+        async with lock:
             with open(itemData_file, 'a', encoding='utf-8') as file:
                 file.write(str(itemData) + '\n\n')
 
-async def getAllItemDataFromLinks(scraper, config, allLinks):
+async def getAllItemDataFromLinks(scraper, config, allLinks, lock):
     if not os.path.exists('Outputs'):
         os.makedirs('Outputs')
 
     async with aiohttp.ClientSession() as session:
-        lock = threading.Lock()
         allPageItemData = []
         tasks = [getItemDataFromLink(session, link, lock, allItemsPathName, allPageItemData, scraper, config) for link in allLinks]
         await asyncio.gather(*tasks)
 
-        # Print or use the first lines as needed
         print("Finished gathering data from catalog page")
         return allPageItemData
 
-def getAllItemData(scraper, config) :
+async def getAllItemData(scraper, config, lock):
     stop = False
     pageCount = 1
     allItemData = []
-    while (stop == False):
+    while not stop:
         response = scraper.getCatalogAtPageResponse(pageCount)
         if (response.status_code != 200):
             # Finished going over all the catalog pages
             printTextToFile(str(allItemData), allLinksPathName)
             return allItemData
-        # Get html of catalog page, and get all painting/item links from that page
         print(f"Getting paintings from catalog page number #{pageCount}")
         soup = getSoup(response)
         pageItemLinks = scraper.getCatalogsItemLinks(soup)
@@ -69,13 +66,13 @@ def getAllItemData(scraper, config) :
         appendTextToFile(str(pageItemLinksFiltered), allLinksPathName)
 
         # USING ASYNC
-        itemsFromLinksFromPage = asyncio.run(getAllItemDataFromLinks(scraper, config, pageItemLinksFiltered))
+        itemsFromLinksFromPage = await getAllItemDataFromLinks(scraper, config, pageItemLinksFiltered, lock)
 
-        allItemData.extend(itemsFromLinksFromPage) 
+        async with lock:
+            allItemData.extend(itemsFromLinksFromPage)
         pageCount += 1
     
-    # (won't get here)
-    return allItemData 
+    return allItemData
 
 if __name__ == "__main__":
     # Check if an argument (artistName) is provided
@@ -110,7 +107,10 @@ if __name__ == "__main__":
         # Gather all item links
         print("Gathering links of all the paintings")
         print(f"Look at file '{allItemsPathName}' to see data collected")
-        allItemData = getAllItemData(tirocheScraper, config)
+
+        asyncio_lock = asyncio.Lock()
+        allItemData = asyncio.run(getAllItemData(tirocheScraper, config, asyncio_lock))
+
         print("Finished gathering links for each painting page, see: ", allLinksPathName)
         print(f"Collected {len(allItemData)} paintings")
 
