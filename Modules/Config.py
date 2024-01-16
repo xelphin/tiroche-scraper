@@ -43,7 +43,6 @@ class Config:
                 # Check if it's a file and has a ".jpg" or ".jpeg" extension
                 if os.path.isfile(itemPath) and item.lower().endswith(('.jpg', '.jpeg')):
                     os.remove(itemPath)
-                    print(f"Removed: {itemPath}")
 
             print(f"All JPG images removed from '{folderPath}'.")
         else:

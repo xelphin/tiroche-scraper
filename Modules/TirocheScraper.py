@@ -1,3 +1,5 @@
+# ./Modules/TirocheScraper.py
+
 import requests
 import re
 from .Scraper import Scraper
