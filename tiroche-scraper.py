@@ -1,4 +1,9 @@
 import sys
+import asyncio
+import aiohttp
+from bs4 import BeautifulSoup
+import os
+import threading
 
 # Modules
 from Modules.fetch import getSoup
@@ -20,29 +25,31 @@ ignoreLinksImagesExtractedPath = "./Config/ignoreCertainImageLinks.txt"
 
 # PRIMARY FUNCTIONS
 
-def getAllItemLinks(scraper, config) :
-    clearFile(allLinksPathName)
+def getAllItemData(scraper, config) :
     stop = False
-    count = 1
-    itemLinks = []
+    pageCount = 1
+    allItemData = []
     while (stop == False):
-        response = scraper.getCatalogAtPageResponse(count)
+        response = scraper.getCatalogAtPageResponse(pageCount)
         if (response.status_code != 200):
-            printTextToFile(str(itemLinks), allLinksPathName)
-            return itemLinks
+            # Finished going over all the catalog pages
+            printTextToFile(str(allItemData), allLinksPathName)
+            return allItemData
+        # Get html of catalog page, and get all painting/item links from that page
+        print(f"Getting paintings from catalog page number #{pageCount}")
         soup = getSoup(response)
         pageItemLinks = scraper.getCatalogsItemLinks(soup)
         pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
-        itemLinks.extend(pageItemLinksFiltered)
-        count += 1
+        appendTextToFile(str(pageItemLinksFiltered), allLinksPathName)
+        allItemData.extend(getAllItemData_aux(scraper, config, pageItemLinksFiltered)) # get painting/item data from each link
+        pageCount += 1
     
     # (won't get here)
-    return itemLinks 
+    return allItemData 
 
-def getAllItemData(scraper, config, allLinks):
+def getAllItemData_aux(scraper, config, allLinks):
     allItemData = []
-    clearFile(allItemsPathName)
-
+    
     # Get data for each item
     # count = 0 # TODO: DELETE!!!!!!!!
     for link in allLinks:
@@ -70,6 +77,9 @@ if __name__ == "__main__":
         userInput = ' '.join(sys.argv[1:])
         artistName = strToQueryStr(userInput)
 
+        clearFile(allLinksPathName)
+        clearFile(allItemsPathName)
+
         print("---- SCRAPER ----")
 
         # Create Scraper object
@@ -90,13 +100,15 @@ if __name__ == "__main__":
         
         # Gather all item links
         print("Gathering links of all the paintings")
-        allItemLinks = getAllItemLinks(tirocheScraper, config)
+        print(f"Look at file '{allItemsPathName}' to see data collected")
+        allItemData = getAllItemData(tirocheScraper, config)
         print("Finished gathering links for each painting page, see: ", allLinksPathName)
+        print(f"Collected {len(allItemData)} paintings")
 
-        # Gather data on each item
-        print("Gathering data on each painting, see: ", allItemsPathName)
-        allItemData = getAllItemData(tirocheScraper, config, allItemLinks)
-        print("Finished gathering all data of paintings")
+        # # Gather data on each item
+        # print("Gathering data on each painting, see: ", allItemsPathName)
+        # allItemData = getAllItemData(tirocheScraper, config, allItemLinks)
+        # print("Finished gathering all data of paintings")
 
         # Turn to CSV
         listOfDictToCsv(allItemData, dataCsvPathName)
