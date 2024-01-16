@@ -1,4 +1,8 @@
-from .fetch import getPageOfUrl, getSoup, getUID4
+# ./Modules/Scraper.py
+
+from .fetch import getPageOfUrl, getSoup, getUID4, getPageOfUrl_async, getSoupFromContent
+import asyncio
+import aiohttp
 
 # DON'T IMPORT CONFIG
 
@@ -55,12 +59,12 @@ class Scraper:
         }
         return item
     
-    def getItemData(self, itemLink):
+    async def getItemData(self, itemLink, session):
         itemData = self.__itemCreator()
-        response = getPageOfUrl(itemLink)
-        if (response.status_code != 200):
-            return ""
-        soup = getSoup(response)
+        content = await getPageOfUrl_async(session, itemLink)
+        # if (response.status_code != 200):
+        #     return ""
+        soup = getSoupFromContent(content)
 
         itemData['id'] = getUID4()
         itemData['artist'] = self.getArtistName(soup)

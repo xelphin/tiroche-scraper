@@ -1,3 +1,5 @@
+# ./tiroche-scraper.py
+
 import sys
 import asyncio
 import aiohttp
@@ -25,6 +27,33 @@ ignoreLinksImagesExtractedPath = "./Config/ignoreCertainImageLinks.txt"
 
 # PRIMARY FUNCTIONS
 
+async def getItemDataFromLink(session, link, lock, itemData_file, allPageItemData, scraper, config):
+    itemData = await scraper.getItemData(link, session)
+
+    if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
+        with lock:
+            allPageItemData.append(itemData)
+        with lock:
+            with open(itemData_file, 'a', encoding='utf-8') as file:
+                file.write(str(itemData) + '\n\n')
+
+async def getAllItemDataFromLinks(scraper, config, allLinks):
+    if not os.path.exists('Outputs'):
+        os.makedirs('Outputs')
+
+    itemData_file = 'Outputs/item_data.txt'
+
+    async with aiohttp.ClientSession() as session:
+        lock = threading.Lock()
+        allPageItemData = []
+        tasks = [getItemDataFromLink(session, link, lock, itemData_file, allPageItemData, scraper, config) for link in allLinks]
+        await asyncio.gather(*tasks)
+
+        # Print or use the first lines as needed
+        print("Finished gathering data from catalog page")
+        return allPageItemData
+
+
 def getAllItemData(scraper, config) :
     stop = False
     pageCount = 1
@@ -41,31 +70,15 @@ def getAllItemData(scraper, config) :
         pageItemLinks = scraper.getCatalogsItemLinks(soup)
         pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
         appendTextToFile(str(pageItemLinksFiltered), allLinksPathName)
-        allItemData.extend(getAllItemData_aux(scraper, config, pageItemLinksFiltered)) # get painting/item data from each link
+
+        # USING ASYNC
+        itemsFromLinksFromPage = asyncio.run(getAllItemDataFromLinks(scraper, config, pageItemLinksFiltered))
+
+        allItemData.extend(itemsFromLinksFromPage) 
         pageCount += 1
     
     # (won't get here)
     return allItemData 
-
-def getAllItemData_aux(scraper, config, allLinks):
-    allItemData = []
-    
-    # Get data for each item
-    # count = 0 # TODO: DELETE!!!!!!!!
-    for link in allLinks:
-        # if (count < 12): # TODO: DELETE!!!!!!!!
-            # print("collecting data on item: ", count) # TODO: DELETE!!!!!!!!
-            itemData = scraper.getItemData(link)
-            if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
-                allItemData.append(itemData)
-                appendTextToFile(str(itemData), allItemsPathName)
-            # count += 1 # TODO: DELETE!!!!!!!!
-
-    # Reputting it so it's in a nice format
-    clearFile(allItemsPathName)
-    printTextToFile(str(allItemData), allItemsPathName)
-    # Return
-    return allItemData
 
 
 if __name__ == "__main__":
