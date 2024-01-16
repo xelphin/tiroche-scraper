@@ -2,7 +2,6 @@
 
 # pip3 install requests
 import requests
-import asyncio
 import aiohttp
 
 # pip3 install beautifulsoup4
@@ -27,12 +26,12 @@ def getSoupFromContent(content):
     return BeautifulSoup(content, 'html.parser')
 
 # Get UID-4
-def getUID4():
+async def getUID4_async():
     url = "https://www.uuidgenerator.net/api/version4"
 
-    response = requests.get(url)
-    if response.status_code == 200:
-        content = response.content.decode('utf-8')
-        # content = response.content
-        return content
-    return -1
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                content = await response.text()
+                return content
+            return -1

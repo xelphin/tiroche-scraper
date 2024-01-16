@@ -41,18 +41,15 @@ async def getAllItemDataFromLinks(scraper, config, allLinks):
     if not os.path.exists('Outputs'):
         os.makedirs('Outputs')
 
-    itemData_file = 'Outputs/item_data.txt'
-
     async with aiohttp.ClientSession() as session:
         lock = threading.Lock()
         allPageItemData = []
-        tasks = [getItemDataFromLink(session, link, lock, itemData_file, allPageItemData, scraper, config) for link in allLinks]
+        tasks = [getItemDataFromLink(session, link, lock, allItemsPathName, allPageItemData, scraper, config) for link in allLinks]
         await asyncio.gather(*tasks)
 
         # Print or use the first lines as needed
         print("Finished gathering data from catalog page")
         return allPageItemData
-
 
 def getAllItemData(scraper, config) :
     stop = False
@@ -79,7 +76,6 @@ def getAllItemData(scraper, config) :
     
     # (won't get here)
     return allItemData 
-
 
 if __name__ == "__main__":
     # Check if an argument (artistName) is provided
