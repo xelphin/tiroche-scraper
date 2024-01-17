@@ -12,8 +12,13 @@ def getPageOfUrl(url):
     return response
 
 async def getPageOfUrl_async(session, url):
-    async with session.get(url) as response:
-        return await response.read()
+    try:
+        async with session.get(url) as response:
+            return await response.read()
+    except Exception as e:
+        # Handle the exception, you can print it for debugging purposes
+        print(f"An error occurred when getting url {url}: {e}")
+        return None
 
 def getSoup(response):
     if response.status_code == 200:

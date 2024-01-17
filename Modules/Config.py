@@ -1,8 +1,12 @@
 import json
 import os
 import requests
-from .fetch import getPageOfUrl, getSoup
+import asyncio
+import aiohttp
+import threading
+from .fetch import getPageOfUrl_async, getSoupFromContent
 from .io import appendTextToFile, clearFile
+
 
 # USES SCRAPER
 
@@ -28,7 +32,7 @@ class Config:
             if (self.config["ignoreCertainImageLinks"]):
                 print("[--Loading imgs from links...]")
                 # sophisticated: even if not the exact link, enough that they have the same image (painting) so as to make it be ignored
-                self.ignoreImgLinks = self.__getImageLinksFromItemLinks(self.ignoreLinks, self.ignoreImgLinks)
+                self.ignoreImgLinks = asyncio.run(self.__getImageLinksFromItemLinks(self.ignoreLinks, self.ignoreImgLinks))
 
         print("[Finished gathering data from config.]")
 
@@ -49,7 +53,7 @@ class Config:
             print(f"Folder '{folderPath}' does not exist.")
 
 
-    def __downloadImage(self, url, folderPath, fileName):
+    async def __downloadImage(self, session, url, lock, folderPath, fileName):
         if (url == ""):
             print("Couldn't find img for: ", fileName)
             return
@@ -57,25 +61,27 @@ class Config:
         # (Asked chatGPT lol)
         os.makedirs(folderPath, exist_ok=True) # Create folder if needed
         filePath = os.path.join(folderPath, fileName) # Combine the folder path and file name to get the full file path
-        response = requests.get(url) # Send an HTTP request to the URL
+        content = await getPageOfUrl_async(session, url) # Send an HTTP request to the URL
 
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
+        if content is not None:
             # Open the file in binary write mode and write the content
+            # TODO: Maybe use "with lock: "
             with open(filePath, 'wb') as file:
-                file.write(response.content)
-            print(f"Image downloaded successfully to {filePath}")
+                file.write(content)
         else:
-            print(f"Failed to download image. Status code: {response.status_code}")
+            print(f"Failed to download image {fileName}.")
 
 
-    def __downloadImages(self, allItemData, downloadPath, deleteOldImages):
+    async def __downloadImages(self, allItemData, downloadPath, deleteOldImages):
         if (deleteOldImages):
             self.__removeJpgImages(downloadPath) # clear what was in the images folder before
-        count = 0
-        for item in allItemData:
-            self.__downloadImage(item["imgLink"], downloadPath, item['id']+".jpg")
-            count+=1
+        
+        async with aiohttp.ClientSession() as session:
+            lock = threading.Lock()
+            tasks = [self.__downloadImage(session, item["imgLink"], lock, downloadPath, item['id']+".jpg") for item in allItemData]
+            await asyncio.gather(*tasks)
+
+        print(f"Finished downloading images. Can be found in: {downloadPath}")
 
 
     def __readLinesFromFile(self, filePath):
@@ -89,25 +95,37 @@ class Config:
             print(f"Error reading file: {e}")
         
         return lines
+    
+    async def __getImageLinksFromItemLinks_aux(self, session, link, lock, arrToAddTo):
+        content = await getPageOfUrl_async(session, link)
 
-    def __getImageLinksFromItemLinks(self, allLinks, arrToAddTo):
-        arrToAddTo = []
-        if (self.config["ignoreCertainImageLinksAlreadyUpdated"]):
-            arrToAddTo = self.__readLinesFromFile(self.ignoreLinksImagesExtractedPath)
-            print("[Haven't recalculated the 'ignoreCertainImageLinks' because of the Config/config.json 'ignoreCertainImageLinksAlreadyUpdated' is 'true']")
-        else :
-            clearFile(self.ignoreLinksImagesExtractedPath)
-            for link in allLinks:
-                response = getPageOfUrl(link)
-                if (response.status_code == 200):
-                    soup = getSoup(response)
-                    imgLink = self.scraper.getItemImgLink(soup)
-                    if (imgLink != ""):
-                        arrToAddTo.append(imgLink)
-                        appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
-            print("[Next time, you can write 'true' in 'ignoreCertainImageLinksAlreadyUpdated' in Config/config.json because the img links have been calculated now]")
-        
-        return arrToAddTo
+        if (content is not None):
+            soup = getSoupFromContent(content)
+            imgLink = self.scraper.getItemImgLink(soup)
+            if (imgLink != ""):
+                with lock:
+                    arrToAddTo.append(imgLink)
+                with lock:
+                    appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
+
+
+    async def __getImageLinksFromItemLinks(self, allLinks, arrToAddTo):
+        async with aiohttp.ClientSession() as session:
+            lock = threading.Lock()
+            arrToAddTo = []
+            if (self.config["ignoreCertainImageLinksAlreadyUpdated"]):
+                arrToAddTo = self.__readLinesFromFile(self.ignoreLinksImagesExtractedPath)
+                print("[Haven't recalculated the 'ignoreCertainImageLinks' because of the Config/config.json 'ignoreCertainImageLinksAlreadyUpdated' is 'true']")
+            else :
+                clearFile(self.ignoreLinksImagesExtractedPath)
+
+                tasks = [self.__getImageLinksFromItemLinks_aux(session, link, lock, arrToAddTo) for link in allLinks]
+                await asyncio.gather(*tasks)
+
+
+                print("[Next time, you can write 'true' in 'ignoreCertainImageLinksAlreadyUpdated' in Config/config.json because the img links have been calculated now]")
+            
+            return arrToAddTo
     
     # PUBLIC FUNCTIONS
 
@@ -125,4 +143,4 @@ class Config:
 
     def applyConfigFromAllItems(self, allItemData):
         if (self.config["downloadImages"]):
-            self.__downloadImages(allItemData, self.config["pathToImagesPrinted"], self.config["deleteOldImages"])
+            asyncio.run(self.__downloadImages(allItemData, self.config["pathToImagesPrinted"], self.config["deleteOldImages"]))
