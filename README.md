@@ -12,7 +12,7 @@ Installs requirements ('requests', 'beautifulsoup4', 'pandas')
 
 Example if you want to search for artist "Arie Aroch"
 ```
-$ python3 tiroche-scraper.py Arie Aroch
+$ python3 main.py Arie Aroch
 ```
 
 In `./Outputs/data.csv` you'll have the data as a csv file
