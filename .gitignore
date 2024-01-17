@@ -1,3 +1,6 @@
 Tiroche_Scraper.egg-info
 Modules/__pycache__
 __pycache__
+Outputs
+Config/ignoreCertainImageLinks.txt
+Config/ignoreCertainPaintingPageLinks.txt

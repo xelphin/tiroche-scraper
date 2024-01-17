@@ -1,8 +1,12 @@
 import json
 import os
 import requests
-from .fetch import getPageOfUrl, getSoup
+import asyncio
+import aiohttp
+import threading
+from .fetch import getPageOfUrl_async, getSoupFromContent
 from .io import appendTextToFile, clearFile
+
 
 # USES SCRAPER
 
@@ -28,7 +32,7 @@ class Config:
             if (self.config["ignoreCertainImageLinks"]):
                 print("[--Loading imgs from links...]")
                 # sophisticated: even if not the exact link, enough that they have the same image (painting) so as to make it be ignored
-                self.ignoreImgLinks = self.__getImageLinksFromItemLinks(self.ignoreLinks, self.ignoreImgLinks)
+                self.ignoreImgLinks = asyncio.run(self.__getImageLinksFromItemLinks(self.ignoreLinks, self.ignoreImgLinks))
 
         print("[Finished gathering data from config.]")
 
@@ -89,25 +93,37 @@ class Config:
             print(f"Error reading file: {e}")
         
         return lines
+    
+    async def __getImageLinksFromItemLinks_aux(self, session, link, lock, arrToAddTo):
+        content = await getPageOfUrl_async(session, link)
 
-    def __getImageLinksFromItemLinks(self, allLinks, arrToAddTo):
-        arrToAddTo = []
-        if (self.config["ignoreCertainImageLinksAlreadyUpdated"]):
-            arrToAddTo = self.__readLinesFromFile(self.ignoreLinksImagesExtractedPath)
-            print("[Haven't recalculated the 'ignoreCertainImageLinks' because of the Config/config.json 'ignoreCertainImageLinksAlreadyUpdated' is 'true']")
-        else :
-            clearFile(self.ignoreLinksImagesExtractedPath)
-            for link in allLinks:
-                response = getPageOfUrl(link)
-                if (response.status_code == 200):
-                    soup = getSoup(response)
-                    imgLink = self.scraper.getItemImgLink(soup)
-                    if (imgLink != ""):
-                        arrToAddTo.append(imgLink)
-                        appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
-            print("[Next time, you can write 'true' in 'ignoreCertainImageLinksAlreadyUpdated' in Config/config.json because the img links have been calculated now]")
-        
-        return arrToAddTo
+        if (content is not None):
+            soup = getSoupFromContent(content)
+            imgLink = self.scraper.getItemImgLink(soup)
+            if (imgLink != ""):
+                with lock:
+                    arrToAddTo.append(imgLink)
+                with lock:
+                    appendTextToFile(str(imgLink), self.ignoreLinksImagesExtractedPath)
+
+
+    async def __getImageLinksFromItemLinks(self, allLinks, arrToAddTo):
+        async with aiohttp.ClientSession() as session:
+            lock = threading.Lock()
+            arrToAddTo = []
+            if (self.config["ignoreCertainImageLinksAlreadyUpdated"]):
+                arrToAddTo = self.__readLinesFromFile(self.ignoreLinksImagesExtractedPath)
+                print("[Haven't recalculated the 'ignoreCertainImageLinks' because of the Config/config.json 'ignoreCertainImageLinksAlreadyUpdated' is 'true']")
+            else :
+                clearFile(self.ignoreLinksImagesExtractedPath)
+
+                tasks = [self.__getImageLinksFromItemLinks_aux(session, link, lock, arrToAddTo) for link in allLinks]
+                await asyncio.gather(*tasks)
+
+
+                print("[Next time, you can write 'true' in 'ignoreCertainImageLinksAlreadyUpdated' in Config/config.json because the img links have been calculated now]")
+            
+            return arrToAddTo
     
     # PUBLIC FUNCTIONS
 

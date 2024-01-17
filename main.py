@@ -108,8 +108,8 @@ if __name__ == "__main__":
         print("Gathering links of all the paintings")
         print(f"Look at file '{allItemsPathName}' to see data collected")
 
-        asyncio_lock = asyncio.Lock()
-        allItemData = asyncio.run(getAllItemData(tirocheScraper, config, asyncio_lock))
+        asyncio_lock_scrape = asyncio.Lock()
+        allItemData = asyncio.run(getAllItemData(tirocheScraper, config, asyncio_lock_scrape))
 
         print("Finished gathering links for each painting page, see: ", allLinksPathName)
         print(f"Collected {len(allItemData)} paintings")
