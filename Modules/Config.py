@@ -53,7 +53,7 @@ class Config:
             print(f"Folder '{folderPath}' does not exist.")
 
 
-    def __downloadImage(self, url, folderPath, fileName):
+    async def __downloadImage(self, session, url, lock, folderPath, fileName):
         if (url == ""):
             print("Couldn't find img for: ", fileName)
             return
@@ -61,25 +61,27 @@ class Config:
         # (Asked chatGPT lol)
         os.makedirs(folderPath, exist_ok=True) # Create folder if needed
         filePath = os.path.join(folderPath, fileName) # Combine the folder path and file name to get the full file path
-        response = requests.get(url) # Send an HTTP request to the URL
+        content = await getPageOfUrl_async(session, url) # Send an HTTP request to the URL
 
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
+        if content is not None:
             # Open the file in binary write mode and write the content
+            # TODO: Maybe use "with lock: "
             with open(filePath, 'wb') as file:
-                file.write(response.content)
-            print(f"Image downloaded successfully to {filePath}")
+                file.write(content)
         else:
-            print(f"Failed to download image. Status code: {response.status_code}")
+            print(f"Failed to download image {fileName}.")
 
 
-    def __downloadImages(self, allItemData, downloadPath, deleteOldImages):
+    async def __downloadImages(self, allItemData, downloadPath, deleteOldImages):
         if (deleteOldImages):
             self.__removeJpgImages(downloadPath) # clear what was in the images folder before
-        count = 0
-        for item in allItemData:
-            self.__downloadImage(item["imgLink"], downloadPath, item['id']+".jpg")
-            count+=1
+        
+        async with aiohttp.ClientSession() as session:
+            lock = threading.Lock()
+            tasks = [self.__downloadImage(session, item["imgLink"], lock, downloadPath, item['id']+".jpg") for item in allItemData]
+            await asyncio.gather(*tasks)
+
+        print(f"Finished downloading images. Can be found in: {downloadPath}")
 
 
     def __readLinesFromFile(self, filePath):
@@ -141,4 +143,4 @@ class Config:
 
     def applyConfigFromAllItems(self, allItemData):
         if (self.config["downloadImages"]):
-            self.__downloadImages(allItemData, self.config["pathToImagesPrinted"], self.config["deleteOldImages"])
+            asyncio.run(self.__downloadImages(allItemData, self.config["pathToImagesPrinted"], self.config["deleteOldImages"]))
