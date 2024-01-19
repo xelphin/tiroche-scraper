@@ -2,10 +2,8 @@
 
 import sys
 import asyncio
-import aiohttp
 from bs4 import BeautifulSoup
-import os
-import threading
+import time
 
 # Modules
 from Modules.helperFunctionsGeneral import strToQueryStr, printSeparatingLines
@@ -36,6 +34,9 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python3 myProgram.py artistName")
     else:
+
+        start_time = time.time()
+
         # Get the artistName from the command line
         userInput = ' '.join(sys.argv[1:])
         artistName = strToQueryStr(userInput)
@@ -44,12 +45,16 @@ if __name__ == "__main__":
         clearFile(allItemsPathName)
 
         # Create Config object
+        start_time_config_init = time.time()
         config = Config(
                         configPath= configPath,
                         ignoreLinksPath= ignoreLinksPath,
                         ignoreLinksImagesExtractedPath= ignoreLinksImagesExtractedPath,
                         getImgCallback = TirocheScraper.getItemImgLink
                         )
+        
+        end_time_config_init = time.time()
+        print(f"Total time config initialization took: {end_time_config_init-start_time_config_init} sec")
 
         # Create Scraper object
         tirocheScraper = TirocheScraper(
@@ -68,6 +73,7 @@ if __name__ == "__main__":
         printSeparatingLines()
         print("------------ SCRAPER ")
         printSeparatingLines()
+        start_time_scraping = time.time()
         asyncio_lock_scrape = asyncio.Lock()
         allItemData = asyncio.run(getAllItemData(tirocheScraper, asyncio_lock_scrape))
 
@@ -81,8 +87,17 @@ if __name__ == "__main__":
         print(f"You can find the csv file in: {dataCsvPathName}")
         printSeparatingLines()
 
+        end_time_scraping = time.time()
+        print(f"Total time scraping took: {end_time_scraping-start_time_scraping} sec")
+
         # Config
         print("Applying some config specifications...")
+        start_time_config = time.time()
         config.applyConfigFromAllItems(allItemData) # (example: downloads images)
+        end_time_config = time.time()
+        print(f"Total time config specs took: {end_time_config-start_time_config} sec (downloading, ...)")
+
+        end_time = time.time()
+        print(f"Total time everything took: {end_time-start_time} sec")
 
 
