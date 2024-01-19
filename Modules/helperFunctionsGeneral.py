@@ -11,3 +11,7 @@ def strToQueryStr(str):
       queryStr += "-"
   
   return  queryStr
+
+def printSeparatingLines():
+  print("---------------------------------------")
+  print("---------------------------------------")
