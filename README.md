@@ -6,13 +6,13 @@ Web scrapes "Tiroche" website given a valid (logged) artist's name
 ```
 $ pip install .
 ```
-Installs requirements ('requests', 'beautifulsoup4', 'pandas')
+Installs requirements ('requests', 'beautifulsoup4', 'pandas', 'aiohttp')
 
 ## Run
 
-Example if you want to search for artist "Arie Aroch"
+Example if you want to search for artist "Marc Chagall"
 ```
-$ python3 main.py Arie Aroch
+$ python3 main.py Marc Chagall
 ```
 
 In `./Outputs/data.csv` you'll have the data as a csv file

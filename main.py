@@ -110,6 +110,6 @@ if __name__ == "__main__":
         applyConfigSpecsOnItemData(config)
 
         end_time = time.time()
-        print(f"Total time everything took: {end_time-start_time} sec")
+        print(f"Total time everything took: {end_time-start_time} sec. Collected {len(allItemData)} paintings")
 
 

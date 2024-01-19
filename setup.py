@@ -8,5 +8,6 @@ setup(
         'requests',
         'beautifulsoup4',
         'pandas',
+        'aiohttp'
     ],
 )

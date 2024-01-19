@@ -66,9 +66,10 @@ class Config:
         if content is not None:
             # Open the file in binary write mode and write the content
             # TODO: Maybe use "with lock: "
+            print(f"Downloading: {fileName}")
             with open(filePath, 'wb') as file:
                 file.write(content)
-            print(f"Downloaded {fileName}")
+            
         else:
             print(f"Failed to download image {fileName}.")
 
