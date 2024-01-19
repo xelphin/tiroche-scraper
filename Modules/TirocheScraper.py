@@ -4,7 +4,7 @@ import requests
 import re
 import aiohttp
 import asyncio
-import os
+
 from .Scraper import Scraper
 from .fetch import getSoup, getSoupFromContent, getPageOfUrl_async
 from .io import printTextToFile, appendTextToFile, clearFile
@@ -49,10 +49,10 @@ class TirocheScraper(Scraper):
         response = requests.get(url)
         return response
     
-    async def __getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, config, catalogPageNum, itemCount):
+    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
         itemData = await self.getItemData(link, session, catalogPageNum, itemCount)
 
-        if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
+        if (not self.config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
             async with lock:
                 allPageItemData.append(itemData)
             async with lock:
@@ -62,56 +62,6 @@ class TirocheScraper(Scraper):
         else:
             print(f"## from catalog page {catalogPageNum}, item {itemCount} -> ignoring item because of config")
 
-    
-    async def __getAllItemDataFromLinks(self, config, allLinks, catalogPageNum, lock):
-        if not os.path.exists('Outputs'):
-            os.makedirs('Outputs')
-
-        async with aiohttp.ClientSession() as session2:
-            allPageItemData = []
-            tasks = [self.__getItemDataFromLink(session2, link, lock, self.allItemsPathName, allPageItemData, config, catalogPageNum, index) for index, link in enumerate(allLinks)]
-            await asyncio.gather(*tasks)
-
-            print("# Finished collecting all data from catalog page: ", catalogPageNum)
-            return allPageItemData
-    
-    async def __getCatalogAtPageSoup_async(self, link, catalogPageNum, allCatalogPagesSoups, allItemData, config, lock, session):
-        content =  await getPageOfUrl_async(session, link)
-        soup = getSoupFromContent(content)
-        async with lock:
-            print("Read catalog page: ", catalogPageNum)
-            allCatalogPagesSoups.append(soup)
-
-        # Get items
-        pageItemLinks = self.getCatalogsItemLinks(soup)
-        pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
-        appendTextToFile(str(pageItemLinksFiltered), self.allLinksPathName)
-        itemsFromLinksFromPage = await self.__getAllItemDataFromLinks(config, pageItemLinksFiltered, catalogPageNum, lock)
-
-        async with lock:
-            allItemData.extend(itemsFromLinksFromPage)
-        
-    
-    async def getAllCatalogPages(self, config, allItemData, lock):
-        # Get first page (sync)
-        allCatalogPagesSoups = []
-        firstPage = self.__getCatalogAtPageResponse(1)
-        soupFirstPage = getSoup(firstPage)
-        # Get amount of pages that will need to be loaded (can find in first page) TODO
-        pagesToLoad = int(self.__getAmountOfPagesToLoad(soupFirstPage))
-        # Load the rest of the pages and their items (async)
-        catalogPagesLinksToLoad = [self.__getLinkAtPage(str(i)) for i in range(1, pagesToLoad+1)]
-        async with aiohttp.ClientSession() as session:
-            tasks = [self.__getCatalogAtPageSoup_async(link, index+1, allCatalogPagesSoups, allItemData, config, lock, session) for index, link in enumerate(catalogPagesLinksToLoad)]
-            await asyncio.gather(*tasks)
-
-            # Return all catalog page soups
-            return allItemData
-
-
-
-    # Given catalogPage (soup of website like: https://www.tiroche.co.il/paintings-authors/marc-chagall/)
-    # returns all the links to the items
     def getCatalogsItemLinks(self, catalogPage):
         itemsLinks = []
         catalog =  catalogPage.find(id="catalog-section")
@@ -125,6 +75,39 @@ class TirocheScraper(Scraper):
                 itemsLinks.append(itemLinkElem.attrs['href'])
 
         return itemsLinks
+     
+    async def __getCatalogAtPageSoup_async(self, link, catalogPageNum, allCatalogPagesSoups, allItemData, lock, session):
+        content =  await getPageOfUrl_async(session, link)
+        soup = getSoupFromContent(content)
+        async with lock:
+            print("Read catalog page: ", catalogPageNum)
+            allCatalogPagesSoups.append(soup)
+
+        # Get items
+        pageItemLinks = self.getCatalogsItemLinks(soup)
+        pageItemLinksFiltered = [item for item in pageItemLinks if self.config.filterLinkKeep(item)]
+        appendTextToFile(str(pageItemLinksFiltered), self.allLinksPathName)
+        itemsFromLinksFromPage = await self.getAllItemDataFromLinks( pageItemLinksFiltered, catalogPageNum, lock)
+
+        async with lock:
+            allItemData.extend(itemsFromLinksFromPage)
+        
+
+    async def getAllItemData(self, allItemData, lock):
+        # Get first page (sync)
+        allCatalogPagesSoups = []
+        firstPage = self.__getCatalogAtPageResponse(1)
+        soupFirstPage = getSoup(firstPage)
+        # Get amount of pages that will need to be loaded (can find in first page) TODO
+        pagesToLoad = int(self.__getAmountOfPagesToLoad(soupFirstPage))
+        # Load the rest of the pages and their items (async)
+        catalogPagesLinksToLoad = [self.__getLinkAtPage(str(i)) for i in range(1, pagesToLoad+1)]
+        async with aiohttp.ClientSession() as session:
+            tasks = [self.__getCatalogAtPageSoup_async(link, index+1, allCatalogPagesSoups, allItemData,  lock, session) for index, link in enumerate(catalogPagesLinksToLoad)]
+            await asyncio.gather(*tasks)
+
+            # Return all catalog page soups
+            return allItemData
 
     # --------------
     # ITEM FUNCTIONS
