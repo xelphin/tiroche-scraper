@@ -4,7 +4,7 @@ import requests
 import re
 import aiohttp
 import asyncio
-import os
+
 from .Scraper import Scraper
 from .fetch import getSoup, getSoupFromContent, getPageOfUrl_async
 from .io import printTextToFile, appendTextToFile, clearFile
@@ -49,7 +49,7 @@ class TirocheScraper(Scraper):
         response = requests.get(url)
         return response
     
-    async def __getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, config, catalogPageNum, itemCount):
+    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, config, catalogPageNum, itemCount):
         itemData = await self.getItemData(link, session, catalogPageNum, itemCount)
 
         if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
@@ -62,19 +62,20 @@ class TirocheScraper(Scraper):
         else:
             print(f"## from catalog page {catalogPageNum}, item {itemCount} -> ignoring item because of config")
 
-    
-    async def __getAllItemDataFromLinks(self, config, allLinks, catalogPageNum, lock):
-        if not os.path.exists('Outputs'):
-            os.makedirs('Outputs')
+    def getCatalogsItemLinks(self, catalogPage):
+        itemsLinks = []
+        catalog =  catalogPage.find(id="catalog-section")
 
-        async with aiohttp.ClientSession() as session2:
-            allPageItemData = []
-            tasks = [self.__getItemDataFromLink(session2, link, lock, self.allItemsPathName, allPageItemData, config, catalogPageNum, index) for index, link in enumerate(allLinks)]
-            await asyncio.gather(*tasks)
+        itemDivs = catalog.find_all('div', recursive=False)
 
-            print("# Finished collecting all data from catalog page: ", catalogPageNum)
-            return allPageItemData
-    
+        for itemDiv in itemDivs:
+            itemImgDiv = itemDiv.find('div', class_='lot-item__img')
+            if itemImgDiv is not None:
+                itemLinkElem =  itemImgDiv.find('a')
+                itemsLinks.append(itemLinkElem.attrs['href'])
+
+        return itemsLinks
+     
     async def __getCatalogAtPageSoup_async(self, link, catalogPageNum, allCatalogPagesSoups, allItemData, config, lock, session):
         content =  await getPageOfUrl_async(session, link)
         soup = getSoupFromContent(content)
@@ -86,13 +87,13 @@ class TirocheScraper(Scraper):
         pageItemLinks = self.getCatalogsItemLinks(soup)
         pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
         appendTextToFile(str(pageItemLinksFiltered), self.allLinksPathName)
-        itemsFromLinksFromPage = await self.__getAllItemDataFromLinks(config, pageItemLinksFiltered, catalogPageNum, lock)
+        itemsFromLinksFromPage = await self.getAllItemDataFromLinks(config, pageItemLinksFiltered, catalogPageNum, lock)
 
         async with lock:
             allItemData.extend(itemsFromLinksFromPage)
         
-    
-    async def getAllCatalogPages(self, config, allItemData, lock):
+
+    async def getAllItemData(self, config, allItemData, lock):
         # Get first page (sync)
         allCatalogPagesSoups = []
         firstPage = self.__getCatalogAtPageResponse(1)
@@ -107,24 +108,6 @@ class TirocheScraper(Scraper):
 
             # Return all catalog page soups
             return allItemData
-
-
-
-    # Given catalogPage (soup of website like: https://www.tiroche.co.il/paintings-authors/marc-chagall/)
-    # returns all the links to the items
-    def getCatalogsItemLinks(self, catalogPage):
-        itemsLinks = []
-        catalog =  catalogPage.find(id="catalog-section")
-
-        itemDivs = catalog.find_all('div', recursive=False)
-
-        for itemDiv in itemDivs:
-            itemImgDiv = itemDiv.find('div', class_='lot-item__img')
-            if itemImgDiv is not None:
-                itemLinkElem =  itemImgDiv.find('a')
-                itemsLinks.append(itemLinkElem.attrs['href'])
-
-        return itemsLinks
 
     # --------------
     # ITEM FUNCTIONS

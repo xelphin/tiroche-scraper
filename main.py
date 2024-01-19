@@ -27,7 +27,7 @@ ignoreLinksImagesExtractedPath = "./Config/ignoreCertainImageLinks.txt"
 
 async def getAllItemData(scraper, config, lock):
     allItemData = []
-    allItemData = await scraper.getAllCatalogPages(config, allItemData, lock)        
+    allItemData = await scraper.getAllItemData(config, allItemData, lock)        
     printTextToFile(str(allItemData), allLinksPathName)
     return allItemData
 
