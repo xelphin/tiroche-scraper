@@ -10,11 +10,12 @@ from .fetch import getUID4_async, getPageOfUrl_async, getSoupFromContent
 class Scraper:
 
     # INIT
-    def __init__(self, artistName, allLinksPathName, allItemsPathName, dataCsvPathName):
+    def __init__(self, artistName, allLinksPathName, allItemsPathName, dataCsvPathName, config):
         self.artistName = artistName
         self.allLinksPathName = allLinksPathName
         self.allItemsPathName = allItemsPathName
         self.dataCsvPathName = dataCsvPathName
+        self.config = config
 
     # -----------------------
     # ITEM SCRAPING FUNCTIONS
@@ -92,18 +93,18 @@ class Scraper:
     # Get (scrape) data from item/painting link
     # Example for item/painting link: https://www.tiroche.co.il/auction/178-en/lot-507-128/
     @abstractmethod
-    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, config, catalogPageNum, itemCount):
+    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
         pass
 
     # From collection of item/painting links, for each link, retrieves data (by calling self.getItemData())
     # Example for item/painting link: https://www.tiroche.co.il/auction/178-en/lot-507-128/
-    async def getAllItemDataFromLinks(self, config, allLinks, catalogPageNum, lock):
+    async def getAllItemDataFromLinks(self, allLinks, catalogPageNum, lock):
         if not os.path.exists('Outputs'):
             os.makedirs('Outputs')
 
         async with aiohttp.ClientSession() as session2:
             allPageItemData = []
-            tasks = [self.getItemDataFromLink(session2, link, lock, self.allItemsPathName, allPageItemData, config, catalogPageNum, index) for index, link in enumerate(allLinks)]
+            tasks = [self.getItemDataFromLink(session2, link, lock, self.allItemsPathName, allPageItemData, catalogPageNum, index) for index, link in enumerate(allLinks)]
             await asyncio.gather(*tasks)
 
             print("# Finished collecting all data from catalog page: ", catalogPageNum)
@@ -118,7 +119,7 @@ class Scraper:
     # Collects all item/painting data from link and the data from the 'next' pages if there are
     # Example for page(s) where collection is done from: https://www.tiroche.co.il/paintings-authors/izhak-frenkel-frenel/
     @abstractmethod
-    async def getAllItemData(self, config, allItemData, lock):
+    async def getAllItemData(self, allItemData, lock):
         pass
     
 

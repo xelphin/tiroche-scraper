@@ -25,9 +25,9 @@ ignoreLinksPath = "./Config/ignoreCertainPaintingPageLinks.txt"
 ignoreLinksImagesExtractedPath = "./Config/ignoreCertainImageLinks.txt"
 
 
-async def getAllItemData(scraper, config, lock):
+async def getAllItemData(scraper, lock):
     allItemData = []
-    allItemData = await scraper.getAllItemData(config, allItemData, lock)        
+    allItemData = await scraper.getAllItemData(allItemData, lock)        
     printTextToFile(str(allItemData), allLinksPathName)
     return allItemData
 
@@ -56,7 +56,8 @@ if __name__ == "__main__":
                                         artistName=artistName,
                                         allLinksPathName= allLinksPathName,
                                         allItemsPathName= allItemsPathName,
-                                        dataCsvPathName= dataCsvPathName
+                                        dataCsvPathName= dataCsvPathName,
+                                        config= config
                                         )
         
         
@@ -68,7 +69,7 @@ if __name__ == "__main__":
         print("------------ SCRAPER ")
         printSeparatingLines()
         asyncio_lock_scrape = asyncio.Lock()
-        allItemData = asyncio.run(getAllItemData(tirocheScraper, config, asyncio_lock_scrape))
+        allItemData = asyncio.run(getAllItemData(tirocheScraper, asyncio_lock_scrape))
 
         printSeparatingLines()
         print("Finished gathering links for each painting page, see: ", allLinksPathName)

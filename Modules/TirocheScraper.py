@@ -49,10 +49,10 @@ class TirocheScraper(Scraper):
         response = requests.get(url)
         return response
     
-    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, config, catalogPageNum, itemCount):
+    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
         itemData = await self.getItemData(link, session, catalogPageNum, itemCount)
 
-        if (not config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
+        if (not self.config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
             async with lock:
                 allPageItemData.append(itemData)
             async with lock:
@@ -76,7 +76,7 @@ class TirocheScraper(Scraper):
 
         return itemsLinks
      
-    async def __getCatalogAtPageSoup_async(self, link, catalogPageNum, allCatalogPagesSoups, allItemData, config, lock, session):
+    async def __getCatalogAtPageSoup_async(self, link, catalogPageNum, allCatalogPagesSoups, allItemData, lock, session):
         content =  await getPageOfUrl_async(session, link)
         soup = getSoupFromContent(content)
         async with lock:
@@ -85,15 +85,15 @@ class TirocheScraper(Scraper):
 
         # Get items
         pageItemLinks = self.getCatalogsItemLinks(soup)
-        pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
+        pageItemLinksFiltered = [item for item in pageItemLinks if self.config.filterLinkKeep(item)]
         appendTextToFile(str(pageItemLinksFiltered), self.allLinksPathName)
-        itemsFromLinksFromPage = await self.getAllItemDataFromLinks(config, pageItemLinksFiltered, catalogPageNum, lock)
+        itemsFromLinksFromPage = await self.getAllItemDataFromLinks( pageItemLinksFiltered, catalogPageNum, lock)
 
         async with lock:
             allItemData.extend(itemsFromLinksFromPage)
         
 
-    async def getAllItemData(self, config, allItemData, lock):
+    async def getAllItemData(self, allItemData, lock):
         # Get first page (sync)
         allCatalogPagesSoups = []
         firstPage = self.__getCatalogAtPageResponse(1)
@@ -103,7 +103,7 @@ class TirocheScraper(Scraper):
         # Load the rest of the pages and their items (async)
         catalogPagesLinksToLoad = [self.__getLinkAtPage(str(i)) for i in range(1, pagesToLoad+1)]
         async with aiohttp.ClientSession() as session:
-            tasks = [self.__getCatalogAtPageSoup_async(link, index+1, allCatalogPagesSoups, allItemData, config, lock, session) for index, link in enumerate(catalogPagesLinksToLoad)]
+            tasks = [self.__getCatalogAtPageSoup_async(link, index+1, allCatalogPagesSoups, allItemData,  lock, session) for index, link in enumerate(catalogPagesLinksToLoad)]
             await asyncio.gather(*tasks)
 
             # Return all catalog page soups
