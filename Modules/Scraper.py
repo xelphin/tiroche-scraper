@@ -13,8 +13,9 @@ class Scraper:
         self.allItemsPathName = allItemsPathName
         self.dataCsvPathName = dataCsvPathName
 
-    def getCatalogAtPageResponse(self, pageNum):
+    async def getAllCatalogPages(self, config, allItemData, lock):
         pass
+        # TODO: Then make getCatalogAtPageResponse() an async
 
     def getCatalogsItemLinks(self, catalogPage):
         pass
@@ -22,7 +23,8 @@ class Scraper:
     def getArtistName(self, itemPage):
         return ""
     
-    def getItemImgLink(self, itemPage):
+    @staticmethod
+    def getItemImgLink(itemPage):
         return ""
     
     def getItemText(self, itemPage):
@@ -57,14 +59,14 @@ class Scraper:
         }
         return item
     
-    async def getItemData(self, itemLink, session):
+    async def getItemData(self, itemLink, session, catalogPageNum, itemCount):
         itemData = self.__itemCreator()
         content = await getPageOfUrl_async(session, itemLink)
-        # if (response.status_code != 200):
-        #     return ""
+        print(f"## Finished awaiting: catalog page {catalogPageNum}, item {itemCount}")
+        
         soup = getSoupFromContent(content)
 
-        itemData['id'] = await getUID4_async()
+        itemData['id'] = await getUID4_async() # Because of this line, you get a "break" between the two prints
         itemData['artist'] = self.getArtistName(soup)
         itemData['websiteLink'] = itemLink
         itemData['imgLink'] = self.getItemImgLink(soup)
@@ -72,5 +74,7 @@ class Scraper:
         itemData['info'] = itemInfo
         itemData = self.extractFromItemTextTheValues(itemInfo, itemData)
         itemData = self.getItemEstimatedPrice(soup, itemData)
+
+        print(f"## Finished analyzing: catalog page {catalogPageNum}, item {itemCount}, id: {itemData['id']}")
 
         return itemData

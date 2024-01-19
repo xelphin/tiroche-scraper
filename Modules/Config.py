@@ -13,11 +13,11 @@ from .io import appendTextToFile, clearFile
 class Config:
 
     # INIT
-    def __init__(self, configPath, ignoreLinksPath, ignoreLinksImagesExtractedPath, scraper):
+    def __init__(self, configPath, ignoreLinksPath, ignoreLinksImagesExtractedPath, getImgCallback):
         self.configPath = configPath
         self.ignoreLinksPath = ignoreLinksPath
         self.ignoreLinksImagesExtractedPath = ignoreLinksImagesExtractedPath
-        self.scraper = scraper
+        self.getImgCallback = getImgCallback
         self.ignoreLinks = []
         self.ignoreImgLinks = []
         print("---- CONFIG ----")
@@ -68,6 +68,7 @@ class Config:
             # TODO: Maybe use "with lock: "
             with open(filePath, 'wb') as file:
                 file.write(content)
+            print(f"Downloaded {fileName}")
         else:
             print(f"Failed to download image {fileName}.")
 
@@ -101,7 +102,7 @@ class Config:
 
         if (content is not None):
             soup = getSoupFromContent(content)
-            imgLink = self.scraper.getItemImgLink(soup)
+            imgLink = self.getImgCallback(soup)
             if (imgLink != ""):
                 with lock:
                     arrToAddTo.append(imgLink)
