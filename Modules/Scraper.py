@@ -13,8 +13,9 @@ class Scraper:
         self.allItemsPathName = allItemsPathName
         self.dataCsvPathName = dataCsvPathName
 
-    def getCatalogAtPageResponse(self, pageNum):
+    async def getAllCatalogPages(self, lock):
         pass
+        # TODO: Then make getCatalogAtPageResponse() an async
 
     def getCatalogsItemLinks(self, catalogPage):
         pass

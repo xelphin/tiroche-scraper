@@ -2,7 +2,10 @@
 
 import requests
 import re
+import aiohttp
+import asyncio
 from .Scraper import Scraper
+from .fetch import getSoup, getSoupFromContent, getPageOfUrl_async
 
 # Main class for web scraping Tiroche website specifically
 
@@ -18,12 +21,64 @@ class TirocheScraper(Scraper):
                 return char
 
         return ""
-
+    
+    def __getLinkAtPage(self, pageNum):
+        return f"https://www.tiroche.co.il/paintings-authors/{self.artistName}/page/{pageNum}/"
+    
     # Get catalogue from Tiroche at page
-    def getCatalogAtPageResponse(self, pageNum):
-        url = f"https://www.tiroche.co.il/paintings-authors/{self.artistName}/page/{pageNum}/"
+    def __getCatalogAtPageResponse(self, pageNum):
+        url = self.__getLinkAtPage(str(pageNum))
         response = requests.get(url)
         return response
+    
+    async def __getCatalogAtPageSoup_async(self, link, allCatalogPagesSoups, lock, session):
+        content =  await getPageOfUrl_async(session, link)
+        soup = getSoupFromContent(content)
+        async with lock:
+            print("Read catalog page: ", link)
+            allCatalogPagesSoups.append(soup)
+    
+    # async def __getAllCatalogPagesFromLinks()
+    
+    def __getAmountOfPagesToLoad(self, catalogPageSoup):
+        navElem = catalogPageSoup.find(attrs={'role': 'navigation'})
+        if not navElem:
+            print("Only one catalog page to load.")
+            return 1
+        navContainer = navElem.find(class_="nav-links")
+        navContainer_elems = navContainer.find_all()
+        if len(navContainer_elems) >= 2:
+            # Get the second-to-last child element
+            lastPageNumberLink = navContainer_elems[-2]
+            print(f"There are {lastPageNumberLink.get_text()} catalog pages that need to be loaded.")
+            return lastPageNumberLink.get_text()
+        else:
+            print("Odd page configuration -> ???")
+            return 1
+    
+    async def getAllCatalogPages(self, lock):
+        # Get first page
+        allCatalogPagesSoups = []
+        firstPage = self.__getCatalogAtPageResponse(1)
+        soupFirstPage = getSoup(firstPage)
+        allCatalogPagesSoups.append(soupFirstPage)
+        with open("./firstPageSoup.txt", 'w') as file:
+            file.write(soupFirstPage.prettify())
+        # Get amount of pages that will need to be loaded (can find in first page) TODO
+        pagesToLoad = int(self.__getAmountOfPagesToLoad(soupFirstPage))
+        # Load the rest of the pages async
+        if pagesToLoad != 1:
+            catalogPagesLinksToLoad = [self.__getLinkAtPage(str(i)) for i in range(2, pagesToLoad+1)]
+            async with aiohttp.ClientSession() as session:
+                tasks = [self.__getCatalogAtPageSoup_async(link, allCatalogPagesSoups, lock, session) for link in catalogPagesLinksToLoad]
+                await asyncio.gather(*tasks)
+
+                # Return all catalog page soups
+                return allCatalogPagesSoups
+        else:
+            return allCatalogPagesSoups
+
+
 
     # Given catalogPage (soup of website like: https://www.tiroche.co.il/paintings-authors/marc-chagall/)
     # returns all the links to the items

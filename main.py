@@ -46,22 +46,19 @@ async def getAllItemDataFromLinks(scraper, config, allLinks, lock):
         tasks = [getItemDataFromLink(session, link, lock, allItemsPathName, allPageItemData, scraper, config) for link in allLinks]
         await asyncio.gather(*tasks)
 
-        print("Finished gathering data from catalog page")
+        print("# collected all data from a catalog page")
         return allPageItemData
 
 async def getAllItemData(scraper, config, lock):
-    stop = False
-    pageCount = 1
+
     allItemData = []
-    while not stop:
-        response = scraper.getCatalogAtPageResponse(pageCount)
-        if (response.status_code != 200):
-            # Finished going over all the catalog pages
-            printTextToFile(str(allItemData), allLinksPathName)
-            return allItemData
-        print(f"Getting paintings from catalog page number #{pageCount}")
-        soup = getSoup(response)
-        pageItemLinks = scraper.getCatalogsItemLinks(soup)
+    
+    allCatalogPagesSoups = await scraper.getAllCatalogPages(lock)
+    print("Finished collecting all catalog pages.")
+    print("For each page, collecting data...")
+
+    for catalogPageSoup in allCatalogPagesSoups:
+        pageItemLinks = scraper.getCatalogsItemLinks(catalogPageSoup)
         pageItemLinksFiltered = [item for item in pageItemLinks if config.filterLinkKeep(item)]
         appendTextToFile(str(pageItemLinksFiltered), allLinksPathName)
 
@@ -70,8 +67,9 @@ async def getAllItemData(scraper, config, lock):
 
         async with lock:
             allItemData.extend(itemsFromLinksFromPage)
-        pageCount += 1
-    
+        
+        
+    printTextToFile(str(allItemData), allLinksPathName)
     return allItemData
 
 if __name__ == "__main__":
@@ -85,8 +83,6 @@ if __name__ == "__main__":
 
         clearFile(allLinksPathName)
         clearFile(allItemsPathName)
-
-        print("---- SCRAPER ----")
 
         # Create Scraper object
         tirocheScraper = TirocheScraper(
@@ -108,6 +104,7 @@ if __name__ == "__main__":
         print("Gathering links of all the paintings")
         print(f"Look at file '{allItemsPathName}' to see data collected")
 
+        print("---- SCRAPER ----")
         asyncio_lock_scrape = asyncio.Lock()
         allItemData = asyncio.run(getAllItemData(tirocheScraper, config, asyncio_lock_scrape))
 
