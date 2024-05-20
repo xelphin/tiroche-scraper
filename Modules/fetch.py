@@ -10,9 +10,29 @@ from chromedriver_py import binary_path
 # pip3 install beautifulsoup4
 from bs4 import BeautifulSoup
 
+class RequestFailedError(Exception):
+    """Exception raised when the HTTP request fails with a non-success status code."""
+    pass
+
 def getPageOfUrl(url):
     response = requests.get(url)
+    # TODO: like getPageOfUrl_useHeaders, check exceptions
     return response
+
+def getPageOfUrl_useHeaders(url):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36'
+        }
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                return response
+            else:
+                print(f"Page couldn't be retrieved: {response.status_code}")
+                raise RequestFailedError
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            raise RequestFailedError
 
 async def getPageOfUrl_async(session, url):
     try:
