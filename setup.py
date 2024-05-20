@@ -8,6 +8,8 @@ setup(
         'requests',
         'beautifulsoup4',
         'pandas',
-        'aiohttp'
+        'aiohttp',
+        'selenium',
+        'chromedriver-py'
     ],
 )
