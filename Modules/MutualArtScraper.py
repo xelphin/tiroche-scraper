@@ -17,9 +17,37 @@ WAIT_TIME_SCROLL = 3
 
 class MutualArtScraper(Scraper):
 
-    def __init__(self, artistName, allLinksPathName, allItemsPathName, dataCsvPathName, config):
-        super().__init__(artistName, allLinksPathName, allItemsPathName, dataCsvPathName, config)
+    # -----------------
+    # CATALOG FUNCTIONS
+    # -----------------
         
+    def getCatalogsItemLinks(self, catalogPage):
+        itemsLinks = []
+        all_items_div = catalogPage.find('div', id='artworkmasonrygrid')
+        itemDivs = all_items_div.find_all('div', recursive=False)
+
+        for itemDiv in itemDivs:
+            itemLink = itemDiv.find('div').get('data-link')
+            itemLink = "https://www.mutualart.com" + itemLink
+            itemsLinks.append(itemLink)
+
+        return itemsLinks
+
+    # -----------------------
+    # ITEM SCRAPING FUNCTIONS
+    # -----------------------
+    
+    def getItemImgLink(itemPage):
+        return ""
+    
+    # Get (scrape) data from item/painting link
+    # Example for item/painting link: https://www.tiroche.co.il/auction/178-en/lot-507-128/
+    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
+        pass
+
+    # -----------------------
+    # GETTING LINKS FUNCTIONS
+    # -----------------------
 
     def __getPageOfAllArtistsWithNameResults(self):
         name_arr = (self.artistName).split("-")
@@ -51,33 +79,11 @@ class MutualArtScraper(Scraper):
         return link_for_artist_page
 
 
-    # -----------------
-    # CATALOG FUNCTIONS
-    # -----------------
-
-    # -----------------------
-    # ITEM SCRAPING FUNCTIONS
-    # -----------------------
-    def getItemImgLink(itemPage):
-        return ""
-
-    # -----------------------
-    # GETTING LINKS FUNCTIONS
-    # -----------------------
-
-    # Get (scrape) data from item/painting link
-    # Example for item/painting link: https://www.tiroche.co.il/auction/178-en/lot-507-128/
-    async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
-        pass
-
-    def getCatalogsItemLinks(self, catalogPage):
-        pass
-
     # Collects all item/painting data from link and the data from the 'next' pages if there are
     async def getAllItemData(self, allItemData, lock):
-        allCatalogPagesSoups = []
         link_to_artist_page = self.__getPageOfArtist()
-        scrollThroughPageAndGetSoup(link_to_artist_page, WAIT_TIME_SCROLL)
+        catalog_soup = scrollThroughPageAndGetSoup(link_to_artist_page, WAIT_TIME_SCROLL)
+        self.getCatalogsItemLinks(catalog_soup)
         # TODO:gather paintings
         return allItemData
     
