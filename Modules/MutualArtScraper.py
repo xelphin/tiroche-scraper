@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 
 # Main class for web scraping Tiroche website specifically
 
-WAIT_TIME_SCROLL = 3
+WAIT_TIME_SCROLL = 0.1 # TODO: Change to higher number (for testing, am leaving at low number)
 
 class MutualArtScraper(Scraper):
 
@@ -36,14 +36,44 @@ class MutualArtScraper(Scraper):
     # -----------------------
     # ITEM SCRAPING FUNCTIONS
     # -----------------------
-    
+    def getArtistName(self, itemPage):
+        return "" # TODO
+
+    @staticmethod
     def getItemImgLink(itemPage):
+        imageDiv = itemPage.find(id="lot-carousel-slick")
+        if imageDiv is None:
+            return ""
+        imageElem =  imageDiv.find('img')
+        if imageElem is None:
+            return ""
+        imageLink = imageElem.get('data-src')
+        if imageLink is not None:
+            return imageLink
         return ""
     
-    # Get (scrape) data from item/painting link
-    # Example for item/painting link: https://www.tiroche.co.il/auction/178-en/lot-507-128/
+    def getItemText(self, itemPage):
+        return "" # TODO
+    
+    def extractFromItemTextTheValues(self, text, itemData):
+        return itemData # TODO
+    
+    def getItemEstimatedPrice(self, itemPage, itemData):
+        return itemData # TODO
+    
     async def getItemDataFromLink(self, session, link, lock, itemData_file, allPageItemData, catalogPageNum, itemCount):
-        pass
+        # TODO: Maybe move to abstract class?
+        itemData = await self.getItemData(link, session, catalogPageNum, itemCount)
+
+        if (not self.config.filterOutBecauseImageInIgnore(itemData["imgLink"])):
+            async with lock:
+                allPageItemData.append(itemData)
+            async with lock:
+                with open(itemData_file, 'a', encoding='utf-8') as file:
+                    file.write(str(itemData) + '\n\n')
+        
+        else:
+            print(f"## from catalog page {catalogPageNum}, item {itemCount} -> ignoring item because of config")
 
     # -----------------------
     # GETTING LINKS FUNCTIONS
@@ -59,6 +89,7 @@ class MutualArtScraper(Scraper):
             search_str += "%20"+word
 
         pageLink = f"https://www.mutualart.com/Results/search?q={search_str}"
+        print(f"searching for artist on {pageLink}")
         page = getPageOfUrl_useHeaders(pageLink)
         soup = getSoup(page)
         return soup
@@ -81,10 +112,18 @@ class MutualArtScraper(Scraper):
 
     # Collects all item/painting data from link and the data from the 'next' pages if there are
     async def getAllItemData(self, allItemData, lock):
-        link_to_artist_page = self.__getPageOfArtist()
+        try:
+            link_to_artist_page = self.__getPageOfArtist()
+        except Exception as e:
+            print("Trouble using page")
+            print("Possible, that the website blocked you for the time being. Try coming back tomorrow.")
+            return []
         catalog_soup = scrollThroughPageAndGetSoup(link_to_artist_page, WAIT_TIME_SCROLL)
-        self.getCatalogsItemLinks(catalog_soup)
-        # TODO:gather paintings
+        allPageItemLinks = self.getCatalogsItemLinks(catalog_soup)
+        pageItemLinksFiltered = [item for item in allPageItemLinks if self.config.filterLinkKeep(item)]
+        # Gather items async
+        allItemData = await self.getAllItemDataFromLinks( pageItemLinksFiltered, 1, lock)
+
         return allItemData
     
 

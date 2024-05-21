@@ -80,7 +80,7 @@ class Scraper:
         itemData = self.extractFromItemTextTheValues(itemInfo, itemData)
         itemData = self.getItemEstimatedPrice(soup, itemData)
 
-        print(f"## Finished analyzing: catalog page {catalogPageNum}, item {itemCount} and getting UID: {itemData['id']}")
+        # print(f"## Finished analyzing: catalog page {catalogPageNum}, item {itemCount} and getting UID: {itemData['id']}")
 
         return itemData
     
